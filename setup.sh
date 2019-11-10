@@ -68,8 +68,8 @@ install_docker(){
     stable"
     sudo apt-get update
     sudo apt-get install -y docker-ce
-    sudo usermod -aG docker $USER
-    su - $USER
+    #sudo usermod -aG docker $USER
+    #su - $USER
 }
 
 # param 1 exchange_address
@@ -95,19 +95,19 @@ check_running_docker_service(){
 }
 
 reset_mongodb(){
-    docker kill mongodb
-    docker rm mongodb
-    docker run -d -p $1:27017 --name mongodb \
+    sudo docker kill mongodb
+    sudo docker rm mongodb
+    sudo docker run -d -p $1:27017 --name mongodb \
     --hostname mongodb mongo:4.2 --replSet rs0
 
     sleep 5
-    docker exec -it mongodb mongo --eval "rs.initiate()"
+    sudo docker exec -it mongodb mongo --eval "rs.initiate()"
 }
 
 reset_rabbitmq(){
-    docker kill rabbitmq
-    docker rm rabbitmq
-    docker run -d -p $1:5672 --name rabbitmq rabbitmq:3.8
+    sudo docker kill rabbitmq
+    sudo docker rm rabbitmq
+    sudo docker run -d -p $1:5672 --name rabbitmq rabbitmq:3.8
 }
 
 setup_rabbitmq(){
