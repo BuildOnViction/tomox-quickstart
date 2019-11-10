@@ -24,9 +24,12 @@ SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/
 FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/v2.0.0-beta/tomo-linux-amd64"
 FULLNODE_CHAIN_DATA=$INSTALL_PATH"/tomox/data"
 TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/testnet.json"
-
+TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
 
 PWD=$(pwd)
+
+DOWNLOAD_CHAIN_DATA_ENABLED=1
+
 # require nc installed
 check_open_port(){
     local=0.0.0.0
@@ -130,6 +133,12 @@ supervisord_stop_sdk(){
     sudo supervisorctl stop tomox-sdk
 }
 
+download_chain_data(){
+    echo "Download chain data, it takes time!"
+    wget -O $INSTALL_PATH"/tomox/chaindata-testnet.tar" $TOMOX_CHAIN_DATA_URL
+    tar xvf $INSTALL_PATH"/tomox/chaindata-testnet.tar" -C $INSTALL_PATH"/tomox/"
+
+}
 start_fullnode(){
     default_chaindata=$INSTALL_PATH"/tomox/data"
     if [ "$FULLNODE_CHAIN_DATA" != "$default_chaindata" ]; then
@@ -137,16 +146,23 @@ start_fullnode(){
         supervisord_restart_fullnode
     else
         if ! test -d $INSTALL_PATH"/tomox/data"; then
+            write_tomoxnode_supervisor
+            if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
+                download_chain_data
+                supervisord_restart_fullnode
+            fi
             wget -O $INSTALL_PATH"/tomox/tomo" $FULLNODE_RELEASE_URL
             chmod +x $INSTALL_PATH"/tomox/tomo"
-            
             curl -L $TOMOX_GENESIS -o $INSTALL_PATH"/tomox/genesis.json"
             #stop_fullnode
             $INSTALL_PATH"/tomox/tomo" account new --datadir $FULLNODE_CHAIN_DATA
             echo "init blockchain"
             echo $FULLNODE_CHAIN_DATA
             $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
-            write_tomoxnode_supervisor
+            if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
+                cp -r $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo"
+            fi 
+
             supervisord_restart_fullnode
         else
             supervisord_restart_fullnode
@@ -172,7 +188,7 @@ setup_fullnode(){
 user_config_sdk(){
     echo "Input exchage address (it is the address you registered in relayer):"
     read exaddress
-    if test -z "$exaddress" ;then
+    if ! test -z "$exaddress" ;then
         EXCHANGE_ADDRESS=$exaddress
     fi
 
@@ -214,7 +230,7 @@ write_sdk_supervisor(){
     cp tomoxsdk.supervisord tomoxsdk.supervisord.bk 
     sed -i "s|${installpath_patern}|${installpath}|g" tomoxsdk.supervisord.bk
     sudo mv tomoxsdk.supervisord.bk $supervisor_log
-
+    sudo supervisorctl reread
 }
 
 write_tomoxnode_supervisor(){
@@ -237,6 +253,7 @@ write_tomoxnode_supervisor(){
     sed -i "s|${path_patern}|${path}|g" tomoxnode.supervisord.bk
 
     sudo mv tomoxnode.supervisord.bk $supervisor_conf
+    sudo supervisorctl reread
     
 }
 
@@ -383,8 +400,6 @@ setup_environment(){
 }
 
 setup_environment
-
-supervisord_stop_fullnode
 supervisord_stop_sdk
 
 echo "*****************INSTALL TOMOX FULLNODE*********************"
