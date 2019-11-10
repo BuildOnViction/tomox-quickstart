@@ -1,0 +1,7 @@
+[program:tomox-sdk]
+command=tomoxinstallpath/tomox-sdk
+autostart=true
+autorestart=true
+directory=tomoxinstallpath
+stderr_logfile=tomoxinstallpath/logs/tomox-sdk.err
+stdout_logfile=tomoxinstallpath/logs/tomox-sdk.log
