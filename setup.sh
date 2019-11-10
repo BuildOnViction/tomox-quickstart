@@ -57,7 +57,7 @@ check_installed_service(){
 }
 
 start_service(){
-    /etc/init.d/$1 start
+    sudo /etc/init.d/$1 start
 }
 install_docker(){
     sudo apt-get update
@@ -120,10 +120,21 @@ stop_fullnode(){
     sudo supervisorctl stop tomox-node
 }
 
+supervisord_restart_fullnode(){
+    sudo supervisorctl restart tomox-node
+}
+supervisord_stop_fullnode(){
+    sudo supervisorctl stop tomox-node
+}
+supervisord_stop_sdk(){
+    sudo supervisorctl stop tomox-sdk
+}
+
 start_fullnode(){
     default_chaindata=$INSTALL_PATH"/tomox/data"
     if [ "$FULLNODE_CHAIN_DATA" != "$default_chaindata" ]; then
-        run_tomox_bash
+        echo "Start fullnode with specific user chain data"
+        supervisord_restart_fullnode
     else
         if ! test -d $INSTALL_PATH"/tomox/data"; then
             wget -O $INSTALL_PATH"/tomox/tomo" $FULLNODE_RELEASE_URL
@@ -135,9 +146,10 @@ start_fullnode(){
             echo "init blockchain"
             echo $FULLNODE_CHAIN_DATA
             $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
-            write_tomoxnode_bash
+            write_tomoxnode_supervisor
+            supervisord_restart_fullnode
         else
-            run_tomox_bash
+            supervisord_restart_fullnode
         fi
     fi
     
@@ -175,7 +187,7 @@ user_config_sdk(){
 user_config_fullnode(){
     echo "Enter fullnode chain data(if you dont have, press enter key):"
     read datachain
-    if test -z "$datachain" ;then
+    if ! test -z "$datachain" ;then
         FULLNODE_CHAIN_DATA=$datachain
     fi
     
@@ -371,6 +383,10 @@ setup_environment(){
 }
 
 setup_environment
+
+supervisord_stop_fullnode
+supervisord_stop_sdk
+
 echo "*****************INSTALL TOMOX FULLNODE*********************"
 check_open_port 8545
 if [ "$?" -eq 1 ]; then
