@@ -164,6 +164,7 @@ start_fullnode(){
             echo $FULLNODE_CHAIN_DATA
             $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
+                rm -rf $INSTALL_PATH"/tomox/data/tomo/chaindata"
                 mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
             fi 
 
@@ -209,7 +210,7 @@ user_config_fullnode(){
 
     echo "Enter fullnode name:"
     read nodename
-    if ! test -z "$datachain" ;then
+    if ! test -z "$nodename" ;then
         NODE_NAME=$nodename
     fi
 
@@ -268,9 +269,6 @@ write_tomoxnode_supervisor(){
     name_patern="nodename"
     name=$NODE_NAME
     sed -i "s|${name_patern}|${name}|g" tomoxnode.supervisord.bk
-
-    
-
     sudo mv tomoxnode.supervisord.bk $supervisor_conf
     
 }
