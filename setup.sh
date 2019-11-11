@@ -182,7 +182,6 @@ start_fullnode(){
 
 setup_fullnode(){
     setup_mongodb
-    user_config_fullnode
     start_fullnode
 
 }
@@ -420,6 +419,7 @@ echo "###                           INSTALL TOMOX SDK                           
 echo "#######################################################################################"
 
 user_config_sdk
+user_config_fullnode
 
 setup_environment
 supervisord_stop_sdk
@@ -438,8 +438,8 @@ if [ "$?" -eq 1 ]; then
 else
     setup_fullnode
 fi
-echo "*****************INSTALL TOMOX SDK BACKEND*********************"
 
+echo "*****************INSTALL TOMOX SDK BACKEND*********************"
 for (( c=1; c<=5; c++ ))
 do  
    check_open_port 8545
