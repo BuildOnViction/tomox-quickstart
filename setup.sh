@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# Version
+TOMOCHAIN_VERSION=v2.0.2-beta
+TOMOX_SDK_VERSION=v1.0.1-beta
+TOMOX_SDK_UI_VERSION=v1.0.1-beta
 
-#Default service port
+# Default service port
 RABBITMQ_PORT_DEFAULT=5672
 MONGODB_PORT_DEFAULT=27017
 SDK_PORT_DEFAULT=8080
@@ -14,14 +18,12 @@ SDK_PORT=$SDK_PORT_DEFAULT
 SDK_UI_PORT=$SDK_UI_PORT_DEFAULT
 INSTALL_PATH=$INSTALL_PATH_DEFAULT
 
-
 EXCHANGE_ADDRESS=""
 RELAYER_SC_ADDRESS="0xe7c16037992bEcAFaeeE779Dacaf8991637953F3"
 
-
-SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/v1.0.1-beta/tomox-sdk.v1.0.1-beta.linux.amd64"
-SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/v1.0.1-beta/tomox-sdk-ui.v1.0.1-beta.testnet.tar.gz"
-FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/v2.0.0-beta/tomo-linux-amd64"
+SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
+SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.testnet.tar.gz"
+FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
 FULLNODE_CHAIN_DATA=$INSTALL_PATH"/tomox/data"
 TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/testnet.json"
 TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
