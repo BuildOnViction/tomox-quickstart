@@ -127,6 +127,8 @@ stop_fullnode(){
 }
 
 supervisord_restart_fullnode(){
+    sudo supervisorctl reread
+    sudo supervisorctl update
     sudo supervisorctl restart tomox-node
 }
 supervisord_stop_fullnode(){
@@ -218,7 +220,11 @@ user_config_fullnode(){
     # fi
     
 }
-
+supervisor_restart_sdk(){
+    sudo supervisorctl reread
+    sudo supervisorctl update
+    sudo supervisorctl restart tomox-sdk
+}
 start_sdk(){
     url=$SDK_BACKEND_RELEASE_URL
     rm -f $INSTALL_PATH"/tomox-sdk"
@@ -226,9 +232,7 @@ start_sdk(){
     chmod +x $INSTALL_PATH"/tomox-sdk"
     write_sdk_supervisor $INSTALL_PATH
     sdk_write_config
-    sudo supervisorctl reread
-    sudo supervisorctl update
-
+    supervisor_restart_sdk
     
 }
 # param 1: path to sdk binary
@@ -240,7 +244,6 @@ write_sdk_supervisor(){
     cp tomoxsdk.supervisord tomoxsdk.supervisord.bk 
     sed -i "s|${installpath_patern}|${installpath}|g" tomoxsdk.supervisord.bk
     sudo mv tomoxsdk.supervisord.bk $supervisor_log
-    sudo supervisorctl reread
 }
 
 write_tomoxnode_supervisor(){
@@ -269,7 +272,6 @@ write_tomoxnode_supervisor(){
     
 
     sudo mv tomoxnode.supervisord.bk $supervisor_conf
-    sudo supervisorctl reread
     
 }
 
@@ -440,7 +442,7 @@ else
 fi
 
 echo "*****************INSTALL TOMOX SDK BACKEND*********************"
-for (( c=1; c<=5; c++ ))
+for (( c=1; c<=15; c++ ))
 do  
    check_open_port 8545
    if [ "$?" -eq 1 ]; then
