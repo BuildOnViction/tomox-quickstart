@@ -398,8 +398,6 @@ setup_environment(){
     setup_nginx
     setup_install_path
 }
-setup_sdk_ui
-exit
 
 setup_environment
 supervisord_stop_sdk
@@ -419,6 +417,17 @@ else
     setup_fullnode
 fi
 echo "*****************INSTALL TOMOX SDK BACKEND*********************"
+
+for (( c=1; c<=5; c++ ))
+do  
+   check_open_port 8545
+   if [ "$?" -eq 1 ]; then
+        sleep 5
+        break
+   fi
+   sleep 2
+done
+
 check_open_port 8080
 if [ "$?" -eq 1 ]; then
     while true; do
