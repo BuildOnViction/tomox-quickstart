@@ -162,7 +162,7 @@ start_fullnode(){
             echo $FULLNODE_CHAIN_DATA
             $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
-                cp -r $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo"
+                mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
             fi 
 
             supervisord_restart_fullnode
