@@ -447,6 +447,7 @@ do
         sleep 5
         break
    fi
+   echo "Waiting for fullnode to start..."
    sleep 2
 done
 
