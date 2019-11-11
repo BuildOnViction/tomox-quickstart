@@ -434,19 +434,78 @@ setup_environment(){
     setup_install_path
 }
 
+progressbar() {
+    number=$(( 100* $1/$2 ))
+    printf "\r"
+    printf "%d/%d" $1 $2
+    printf "["
+    for (( c=1; c<=$number; c++ )) 
+    do
+        printf  "▓"
+    done
+    n=$(($number +1))
+    for (( d=$n; d<=100; d++ )) 
+    do
+        printf  "_"
+    done
+
+    printf "]"
+}
+
+show_install_status(){
+    sleep 10
+    echo "############################# Waiting for checking installed status ######################"
+    check_open_port 8080
+    if [ "$?" -eq 1 ]; then
+        echo "Tomox SDK backend is running on port 8080"
+    else
+        echo "Tomox SDK backend is not running"
+    fi
+
+    check_open_port 80
+    if [ "$?" -eq 1 ]; then
+        echo "Tomox UI is running on port 80"
+    else
+        echo "Tomox UI is not running"
+    fi
+
+    check_open_port 8545
+    if [ "$?" -eq 1 ]; then
+        echo "Tomox fullnode in running"
+        echo "You have to wait for the synchronization blocks process"
+        echo "Press any key to exit show synchronization process"
+        while [ true ] ; do
+            read -t 3 -n 1
+            if [ $? = 0 ] ; then
+                exit ;
+            else
+                chain_block=`$INSTALL_PATH"/tomox/tomo" attach https://testnet.tomochain.com --exec 'eth.blockNumber'`
+                myfullnode_block=`$INSTALL_PATH"/tomox/tomo" attach http://localhost:8545 --exec 'eth.blockNumber'`
+                    
+                progressbar $myfullnode_block $chain_block
+                sleep 5
+            fi
+        done
+        echo "finish"
+    else
+        echo "Tomox fullnode in not running"
+
+    fi
+}
+
+
 echo "#######################################################################################"
 echo "###                           INSTALL TOMOX SDK                                     ###"
 echo "#######################################################################################"
-
 
 user_config_sdk
 user_config_fullnode
 
 setup_environment
-supervisord_stop_sdk
+#supervisord_stop_sdk
 
 echo "*****************INSTALL TOMOX FULLNODE*********************"
-check_service_url http://localhost:8545
+check_open_port 8545
 if [ "$?" -eq 1 ]; then
     while true; do
         read -p "Fullnode may be running, if continue you must stop it first. Continue installing? (Y/N)" yn
@@ -463,7 +522,7 @@ fi
 echo "*****************INSTALL TOMOX SDK BACKEND*********************"
 for (( c=1; c<=15; c++ ))
 do  
-   check_service_url http://localhost:8545
+   check_open_port 8545
    if [ "$?" -eq 1 ]; then
         sleep 5
         break
@@ -472,7 +531,7 @@ do
    sleep 2
 done
 
-check_service_url http://localhost:8080
+check_open_port 8080
 if [ "$?" -eq 1 ]; then
     while true; do
         read -p "A program isrunning on port 8080, if continue you must stop it first. Continue installing? (Y/N)" yn
@@ -487,4 +546,19 @@ else
 fi
 
 echo "*****************INSTALL TOMOX SDK UI*********************"
-setup_sdk_ui
+
+check_open_port 80
+if [ "$?" -eq 1 ]; then
+    while true; do
+        read -p "A program isrunning on port 80, if continue you must stop it first. Continue installing? (Y/N)" yn
+        case $yn in
+            [Yy]* ) setup_sdk_ui; break;;
+            [Nn]* ) break;;
+            * ) echo "Please answer yes or no";;
+        esac
+    done
+else
+    setup_sdk_ui
+fi
+
+show_install_status
