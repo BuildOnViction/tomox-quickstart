@@ -31,6 +31,8 @@ PWD=$(pwd)
 DOWNLOAD_CHAIN_DATA_ENABLED=1
 
 TOMOX_UI_HTML_PATH="/var/www/tomox-sdk-ui"
+NODE_NAME=$USER
+
 # require nc installed
 check_open_port(){
     local=0.0.0.0
@@ -180,6 +182,7 @@ start_fullnode(){
 
 setup_fullnode(){
     setup_mongodb
+    user_config_fullnode
     start_fullnode
 
 }
@@ -202,11 +205,18 @@ user_config_sdk(){
 }
 
 user_config_fullnode(){
-    echo "Enter fullnode chain data(if you dont have, press enter key):"
-    read datachain
+
+    echo "Enter fullnode name:"
+    read nodename
     if ! test -z "$datachain" ;then
-        FULLNODE_CHAIN_DATA=$datachain
+        NODE_NAME=$nodename
     fi
+
+    # echo "Enter fullnode chain data(if you dont have, press enter key):"
+    # read datachain
+    # if ! test -z "$datachain" ;then
+    #     FULLNODE_CHAIN_DATA=$datachain
+    # fi
     
 }
 
@@ -252,6 +262,12 @@ write_tomoxnode_supervisor(){
     path_patern="installpath"
     path=$INSTALL_PATH
     sed -i "s|${path_patern}|${path}|g" tomoxnode.supervisord.bk
+
+    name_patern="nodename"
+    name=$NODE_NAME
+    sed -i "s|${name_patern}|${name}|g" tomoxnode.supervisord.bk
+
+    
 
     sudo mv tomoxnode.supervisord.bk $supervisor_conf
     sudo supervisorctl reread
