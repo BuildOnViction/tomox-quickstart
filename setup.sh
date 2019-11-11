@@ -30,6 +30,7 @@ PWD=$(pwd)
 
 DOWNLOAD_CHAIN_DATA_ENABLED=1
 
+TOMOX_UI_HTML_PATH="/var/www/tomox-sdk-ui"
 # require nc installed
 check_open_port(){
     local=0.0.0.0
@@ -366,9 +367,9 @@ setup_nginx(){
 }
 
 
-config_nginx(){
+config_tomox_ui_nginx(){
     path_patern="htmlroot"
-    path=$INSTALL_PATH"/tomox-sdk-ui/build"
+    path=$TOMOX_UI_HTML_PATH
     sed "s|${path_patern}|${path}|g" tomox-nginx.conf>tomox-sdk.conf
     sudo mv tomox-sdk.conf /etc/nginx/sites-enabled/tomox-sdk.conf
     sudo rm -f /etc/nginx/sites-enabled/default
@@ -378,11 +379,11 @@ config_nginx(){
 setup_sdk_ui(){
     cd $PWD
     url=$SDK_UI_RELEASE_URL
-    rm -rf $INSTALL_PATH"/tomox-sdk-ui.tar.gz"
-    wget -O $INSTALL_PATH"/tomox-sdk-ui.tar.gz" $url
-    tar xvzf $INSTALL_PATH"/tomox-sdk-ui.tar.gz" -C $INSTALL_PATH"/tomox-sdk-ui"
-    rm -rf $INSTALL_PATH"/tomox-sdk-ui.tar.gz"
-    config_nginx
+    wget -O "tomox-sdk-ui.tar.gz" $url
+    tar xvzf "tomox-sdk-ui.tar.gz"
+    rm -rf "tomox-sdk-ui.tar.gz"
+    sudo mv build $TOMOX_UI_HTML_PATH
+    config_tomox_ui_nginx
     sudo /etc/init.d/nginx restart
 
 }
@@ -397,6 +398,8 @@ setup_environment(){
     setup_nginx
     setup_install_path
 }
+setup_sdk_ui
+exit
 
 setup_environment
 supervisord_stop_sdk
