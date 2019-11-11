@@ -34,7 +34,7 @@ TOMOX_UI_HTML_PATH="/var/www/tomox-sdk-ui"
 NODE_NAME=$USER
 
 # require nc installed
-check_open_port(){
+checl_open_port2(){
     local=0.0.0.0
     </dev/tcp/$local/$1
     if [ "$?" -ne 0 ]; then
@@ -43,6 +43,23 @@ check_open_port(){
         return 1
     fi
 }
+check_open_port(){
+    if nc -zw1 0.0.0.0 $1; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+check_service_url(){
+    wget -q --spider $1
+    if [ $? -eq 0 ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 # check service is running, if not start it
 # require debian os
 check_running_service(){
@@ -103,7 +120,7 @@ check_running_docker_service(){
 reset_mongodb(){
     sudo docker kill mongodb
     sudo docker rm mongodb
-    sudo docker run -d -p $1:27017 --name mongodb \
+    sudo docker run --restart always -d -p $1:27017 --name mongodb \
     --hostname mongodb mongo:4.2 --replSet rs0
 
     sleep 5
@@ -113,7 +130,7 @@ reset_mongodb(){
 reset_rabbitmq(){
     sudo docker kill rabbitmq
     sudo docker rm rabbitmq
-    sudo docker run -d -p $1:5672 --name rabbitmq rabbitmq:3.8
+    sudo docker run --restart always -d -p $1:5672 --name rabbitmq rabbitmq:3.8
 }
 
 setup_rabbitmq(){
@@ -141,7 +158,8 @@ supervisord_stop_sdk(){
 download_chain_data(){
     echo "Download chain data, it takes time!"
     wget -O $INSTALL_PATH"/tomox/chaindata-testnet.tar" $TOMOX_CHAIN_DATA_URL
-    tar xvf $INSTALL_PATH"/tomox/chaindata-testnet.tar" -C $INSTALL_PATH"/tomox/"
+    echo "extracting chain data ......"
+    tar xf $INSTALL_PATH"/tomox/chaindata-testnet.tar" -C $INSTALL_PATH"/tomox/"
 
 }
 start_fullnode(){
@@ -395,7 +413,7 @@ setup_sdk_ui(){
     cd $PWD
     url=$SDK_UI_RELEASE_URL
     wget -O "tomox-sdk-ui.tar.gz" $url
-    tar xvzf "tomox-sdk-ui.tar.gz"
+    tar xzf "tomox-sdk-ui.tar.gz"
     rm -rf "tomox-sdk-ui.tar.gz"
     sudo mv build $TOMOX_UI_HTML_PATH
     config_tomox_ui_nginx
@@ -418,6 +436,7 @@ echo "##########################################################################
 echo "###                           INSTALL TOMOX SDK                                     ###"
 echo "#######################################################################################"
 
+
 user_config_sdk
 user_config_fullnode
 
@@ -425,7 +444,7 @@ setup_environment
 supervisord_stop_sdk
 
 echo "*****************INSTALL TOMOX FULLNODE*********************"
-check_open_port 8545
+check_service_url http://localhost:8545
 if [ "$?" -eq 1 ]; then
     while true; do
         read -p "Fullnode may be running, if continue you must stop it first. Continue installing? (Y/N)" yn
@@ -442,7 +461,7 @@ fi
 echo "*****************INSTALL TOMOX SDK BACKEND*********************"
 for (( c=1; c<=15; c++ ))
 do  
-   check_open_port 8545
+   check_service_url http://localhost:8545
    if [ "$?" -eq 1 ]; then
         sleep 5
         break
@@ -451,7 +470,7 @@ do
    sleep 2
 done
 
-check_open_port 8080
+check_service_url http://localhost:8080
 if [ "$?" -eq 1 ]; then
     while true; do
         read -p "A program isrunning on port 8080, if continue you must stop it first. Continue installing? (Y/N)" yn
