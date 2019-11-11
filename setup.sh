@@ -180,7 +180,6 @@ start_fullnode(){
 
 setup_fullnode(){
     setup_mongodb
-    user_config_fullnode
     start_fullnode
 
 }
@@ -288,7 +287,6 @@ run_tomox_bash(){
 setup_sdk(){
     cd $PWD
     setup_rabbitmq
-    user_config_sdk
     start_sdk
 }
 
@@ -398,6 +396,8 @@ setup_environment(){
     setup_nginx
     setup_install_path
 }
+
+user_config_sdk
 
 setup_environment
 supervisord_stop_sdk
