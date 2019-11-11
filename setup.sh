@@ -185,7 +185,9 @@ setup_fullnode(){
 }
 
 user_config_sdk(){
-    echo "Input exchage address (it is the address you registered in relayer):"
+    echo "Input exchage address (it is the address you registered in relayer)"
+    echo "if you are not registered, access https://relayer.testnet.tomochain.com to register"
+    echo "Your relayer coinbase:"
     read exaddress
     if ! test -z "$exaddress" ;then
         EXCHANGE_ADDRESS=$exaddress
@@ -396,6 +398,10 @@ setup_environment(){
     setup_nginx
     setup_install_path
 }
+
+echo "#######################################################################################"
+echo "###                           INSTALL TOMOX SDK                                     ###"
+echo "#######################################################################################"
 
 user_config_sdk
 
