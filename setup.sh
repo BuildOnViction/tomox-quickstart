@@ -149,14 +149,13 @@ start_fullnode(){
             write_tomoxnode_supervisor
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
                 download_chain_data
-                supervisord_restart_fullnode
             fi
             wget -O $INSTALL_PATH"/tomox/tomo" $FULLNODE_RELEASE_URL
             chmod +x $INSTALL_PATH"/tomox/tomo"
             curl -L $TOMOX_GENESIS -o $INSTALL_PATH"/tomox/genesis.json"
             #stop_fullnode
-            $INSTALL_PATH"/tomox/tomo" account new --datadir $FULLNODE_CHAIN_DATA
-            echo "init blockchain"
+            echo "">$INSTALL_PATH"/tomox/passparser"
+            $INSTALL_PATH"/tomox/tomo" account new --datadir $FULLNODE_CHAIN_DATA --password $INSTALL_PATH"/tomox/passparser"
             echo $FULLNODE_CHAIN_DATA
             $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
