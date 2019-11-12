@@ -3,5 +3,5 @@ command=tomoxinstallpath/tomox-sdk
 autostart=true
 autorestart=true
 directory=tomoxinstallpath
-stderr_logfile=tomoxinstallpath/logs/tomox-sdk.err
+stderr_logfile=tomoxinstallpath/logs/tomox-sdk.log
 stdout_logfile=tomoxinstallpath/logs/tomox-sdk.log
