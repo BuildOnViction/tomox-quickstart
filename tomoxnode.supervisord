@@ -3,5 +3,5 @@ command=tomobinarypath --bootnodes "enode://ce1191bf9a634e7939676d136816ad84941b
 autostart=true
 autorestart=true
 directory=tomoxdirectory
-stderr_logfile=installpath/logs/node.err
+stderr_logfile=installpath/logs/node.log
 stdout_logfile=installpath/logs/node.log
