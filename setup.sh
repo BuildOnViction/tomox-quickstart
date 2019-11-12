@@ -424,7 +424,18 @@ setup_sdk_ui(){
 }
 install_dependency(){
     sudo apt-get update
-    sudo apt-get install -y curl wget  netcat-openbsd
+    echo "Checking packages to install..."
+    declare -a arr=("curl" "wget" "netcat-openbsdd")
+    for pkg in "${arr[@]}"
+    do
+        if sudo apt-get -qq install $pkg; then
+            echo "$pkg installed "
+        else
+            echo "Installing $pkg"
+            sudo apt-get install -y "$pkg"
+        fi
+    done
+
 }
 setup_environment(){
     install_dependency
@@ -473,7 +484,7 @@ show_install_status(){
     if [ "$?" -eq 1 ]; then
         echo "Tomox fullnode in running"
         echo "You have to wait for the synchronization blocks process"
-        echo "Press any key to exit show synchronization process"
+        echo "Synchronization process is running in background, press any key to exit showing synchronization process"
         while [ true ] ; do
             read -t 3 -n 1
             if [ $? = 0 ] ; then
@@ -481,18 +492,18 @@ show_install_status(){
             else
                 chain_block=`$INSTALL_PATH"/tomox/tomo" attach https://testnet.tomochain.com --exec 'eth.blockNumber'`
                 myfullnode_block=`$INSTALL_PATH"/tomox/tomo" attach http://localhost:8545 --exec 'eth.blockNumber'`
-                    
                 progressbar $myfullnode_block $chain_block
                 sleep 5
             fi
         done
-        echo "finish"
+        echo "Finish!"
     else
         echo "Tomox fullnode in not running"
 
     fi
 }
-
+install_dependency
+exit
 
 echo "#######################################################################################"
 echo "###                           INSTALL TOMOX SDK                                     ###"
