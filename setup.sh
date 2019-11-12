@@ -502,8 +502,6 @@ show_install_status(){
 
     fi
 }
-install_dependency
-exit
 
 echo "#######################################################################################"
 echo "###                           INSTALL TOMOX SDK                                     ###"
