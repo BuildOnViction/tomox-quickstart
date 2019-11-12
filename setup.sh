@@ -422,17 +422,32 @@ setup_sdk_ui(){
     sudo /etc/init.d/nginx restart
 
 }
+
+check_package_install(){
+    dpkg -s $1 &> /dev/null
+
+    if [ $? -eq 0 ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+install_package(){
+   sudo apt-get install -y $1  
+}
 install_dependency(){
     sudo apt-get update
     echo "Checking packages to install..."
-    declare -a arr=("curl" "wget" "netcat-openbsdd")
+    declare -a arr=("curl" "wget" "netcat-openbsd")
     for pkg in "${arr[@]}"
     do
-        if sudo apt-get -qq install $pkg; then
+        check_package_install $pkg
+        if [ $? -eq 1 ]; then
             echo "$pkg installed "
         else
             echo "Installing $pkg"
-            sudo apt-get install -y "$pkg"
+            install_package "$pkg"
         fi
     done
 
@@ -484,7 +499,7 @@ show_install_status(){
     if [ "$?" -eq 1 ]; then
         echo "Tomox fullnode in running"
         echo "You have to wait for the synchronization blocks process"
-        echo "Synchronization process is running in background, press any key to exit showing synchronization process"
+        echo "Synchronization process is running in background, press any key to exit showing synchronization status"
         while [ true ] ; do
             read -t 3 -n 1
             if [ $? = 0 ] ; then
@@ -502,6 +517,7 @@ show_install_status(){
 
     fi
 }
+
 
 echo "#######################################################################################"
 echo "###                           INSTALL TOMOX SDK                                     ###"
@@ -543,7 +559,7 @@ done
 check_open_port 8080
 if [ "$?" -eq 1 ]; then
     while true; do
-        read -p "A program isrunning on port 8080, if continue you must stop it first. Continue installing? (Y/N)" yn
+        read -p "A program is running on port 8080, if continue you must stop it first. Continue installing? (Y/N)" yn
         case $yn in
             [Yy]* ) setup_sdk; break;;
             [Nn]* ) break;;
