@@ -35,6 +35,61 @@ DOWNLOAD_CHAIN_DATA_ENABLED=1
 TOMOX_UI_HTML_PATH="/var/www/tomox-sdk-ui"
 NODE_NAME=$USER
 
+
+UBUNTU=0
+CENTOS=0
+
+
+################################## raw function begin, depend on os ########################################
+
+update_os(){
+    if [ $UBUNTU -eq 1 ]; then
+        sudo apt-get update
+    elif [ $CENTOS -eq 1 ]; then
+        sudo yum -y check-update
+        install_package epel-release
+    fi
+   
+}
+install_package(){
+    if [ $UBUNTU -eq 1 ]; then
+        sudo apt-get install -y $1  
+    elif [ $CENTOS -eq 1 ]; then
+        sudo yum install -y $1
+    fi  
+}
+start_service(){
+    if [ $UBUNTU -eq 1 ] || [ $CENTOS -eq 1 ]; then
+        sudo service $1 start
+    fi
+    
+}
+restart_service(){
+    if [ $UBUNTU -eq 1 ] || [ $CENTOS -eq 1 ]; then
+        sudo service $1 restart
+    fi
+}
+check_installed_service(){
+    if [ $UBUNTU -eq 1 ]; then
+        if test -f "/etc/init.d/$1" ; then    
+            return 1
+        else
+            return 0
+        fi
+    elif [ $CENTOS -eq 1 ] ; then 
+        STATUS=`systemctl is-enabled $1`
+        if [[ ${STATUS} == 'enabled' ]]; then
+            return 1
+        fi
+        if [[ ${STATUS} == 'disabled' ]]; then
+            return 1
+        fi
+        return 0
+            
+    fi
+    return 2
+}
+
 # require nc installed
 checl_open_port2(){
     local=0.0.0.0
@@ -53,15 +108,6 @@ check_open_port(){
     fi
 }
 
-check_service_url(){
-    wget -q --spider $1
-    if [ $? -eq 0 ]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
 # check service is running, if not start it
 # require debian os
 check_running_service(){
@@ -72,29 +118,30 @@ check_running_service(){
         return 0
 fi
 }
-check_installed_service(){
-    FILE=/etc/init.d/$1
-    if test -f "$FILE"; then
-        return 1
-    else
-        return 0
-    fi
-}
 
-start_service(){
-    sudo /etc/init.d/$1 start
+install_nginx(){
+    if [ $UBUNTU -eq 1 ]; then
+        install_package nginx
+    elif [ $CENTOS -eq 1 ]; then
+        install_package nginx
+    fi  
+    
 }
+install_supervisor(){
+    if [ $UBUNTU -eq 1 ]; then
+        install_package supervisor
+    elif [ $CENTOS -eq 1 ]; then
+        install_package supervisor
+        restart_service supervisord
+    fi
+     
+    
+} 
 install_docker(){
-    sudo apt-get update
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository \
-    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) \
-    stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce
-    #sudo usermod -aG docker $USER
-    #su - $USER
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo chmod +x get-docker.sh
+    sudo sh get-docker.sh
+    restart_service docker
 }
 
 # param 1 exchange_address
@@ -193,14 +240,6 @@ start_fullnode(){
             supervisord_restart_fullnode
         fi
     fi
-    
-    #write_tomoxnode_supervisor
-    #sudo supervisorctl reread
-    #sudo supervisorctl update
-    #sudo supervisorctl restart tomox-node
-    
-    
-
 }
 
 setup_fullnode(){
@@ -258,17 +297,28 @@ start_sdk(){
 }
 # param 1: path to sdk binary
 write_sdk_supervisor(){
-    supervisor_log="/etc/supervisor/conf.d/tomox-sdk.conf"
+    supervisor_conf="/etc/supervisor/conf.d/tomox-sdk.conf"
+    if [ $UBUNTU -eq 1 ]; then
+        supervisor_conf="/etc/supervisor/conf.d/tomox-sdk.conf"
+    elif [ $CENTOS -eq 1 ]; then
+        supervisor_conf="/etc/supervisord.d/tomox-sdk.ini"
+    fi
+
     installpath_patern="tomoxinstallpath"
     installpath=$INSTALL_PATH
     
     cp tomoxsdk.supervisord tomoxsdk.supervisord.bk 
     sed -i "s|${installpath_patern}|${installpath}|g" tomoxsdk.supervisord.bk
-    sudo mv tomoxsdk.supervisord.bk $supervisor_log
+    sudo mv tomoxsdk.supervisord.bk $supervisor_conf
 }
 
 write_tomoxnode_supervisor(){
     supervisor_conf="/etc/supervisor/conf.d/tomox-node.conf"
+    if [ $UBUNTU -eq 1 ]; then
+        supervisor_conf="/etc/supervisor/conf.d/tomox-node.conf"
+    elif [ $CENTOS -eq 1 ]; then
+        supervisor_conf="/etc/supervisord.d/tomox-node.ini"
+    fi
     cp tomoxnode.supervisord tomoxnode.supervisord.bk 
     tomo_patern="tomobinarypath"
     tomo=$INSTALL_PATH"/tomox/tomo"
@@ -324,6 +374,17 @@ run_tomox_bash(){
 setup_sdk(){
     cd $PWD
     setup_rabbitmq
+    for (( c=1; c<=15; c++ ))
+    do  
+        check_open_port 5672
+        if [ "$?" -eq 1 ]; then
+                echo "Waiting for rabbitmq to start...."
+                sleep 15
+                break
+        fi
+        echo "Waiting for rabbitmq to start..."
+        sleep 2
+    done
     start_sdk
 }
 
@@ -368,20 +429,25 @@ setup_docker(){
     fi
 }
 setup_supervisor(){
-    check_running_service supervisor
+    name="supervisor"
+    if [ $UBUNTU -eq 1 ]; then
+        name="supervisor"
+    elif [ $CENTOS -eq 1 ]; then
+        name="supervisord"
+    fi
+
+    check_running_service $name
     if [ "$?" -eq 0 ]; then
         echo "supervisor is not running"
-        check_installed_service supervisor
+        check_installed_service $name
         if [ "$?" -eq 1 ]; then
             echo "service supervisor is installed but not running, starts it"
-            start_service supervisor
+            start_service $name
         else
             echo "service supervisor is not installed, installs it"
-            sudo apt-get -y install supervisor
+            install_supervisor
         fi
-
     fi
-    
 }
 
 setup_nginx(){
@@ -391,10 +457,10 @@ setup_nginx(){
         check_installed_service nginx
         if [ "$?" -eq 1 ]; then
             echo "service nginx is installed but not running, starts it"
-            start_service supervisor
+            start_service nginx
         else
             echo "service nginx is not installed, installs it"
-            sudo apt-get -y install nginx
+            install_nginx
         fi
 
     fi
@@ -403,43 +469,76 @@ setup_nginx(){
 
 
 config_tomox_ui_nginx(){
-    path_patern="htmlroot"
+    nginx_conf="/etc/nginx/sites-enabled/tomox-sdk.conf"
     path=$TOMOX_UI_HTML_PATH
-    sed "s|${path_patern}|${path}|g" tomox-nginx.conf>tomox-sdk.conf
-    sudo mv tomox-sdk.conf /etc/nginx/sites-enabled/tomox-sdk.conf
-    sudo rm -f /etc/nginx/sites-enabled/default
+    if [ $UBUNTU -eq 1 ]; then
+        nginx_conf="/etc/nginx/sites-enabled/tomox-sdk.conf"
+        sudo rm -f /etc/nginx/sites-enabled/default
+        path=$TOMOX_UI_HTML_PATH
+        sample_conf="tomox-nginx.conf"
+    elif [ $CENTOS -eq 1 ]; then
+        nginx_conf="/etc/nginx/nginx.conf"
+        path="/usr/share/nginx/tomox-sdk-ui"
+        sample_conf="tomox-nginx-centos.conf"
+    fi
+    path_patern="htmlroot"
+    sed "s|${path_patern}|${path}|g" $sample_conf>tomox-sdk.conf
+    sudo cat tomox-sdk.conf >$nginx_conf
 } 
 
 
 setup_sdk_ui(){
+    setup_nginx
     cd $PWD
     url=$SDK_UI_RELEASE_URL
     wget -O "tomox-sdk-ui.tar.gz" $url
     tar xzf "tomox-sdk-ui.tar.gz"
     rm -rf "tomox-sdk-ui.tar.gz"
-    sudo mv build $TOMOX_UI_HTML_PATH
+    if [ $UBUNTU -eq 1 ]; then
+        html_path=$TOMOX_UI_HTML_PATH
+    elif [ $CENTOS -eq 1 ]; then
+        html_path="/usr/share/nginx/tomox-sdk-ui"
+    fi
+    sudo mv build $html_path
     config_tomox_ui_nginx
-    sudo /etc/init.d/nginx restart
+
+    if [ $CENTOS -eq 1 ]; then
+        setenforce Permissive
+    fi
+    restart_service nginx
 
 }
 
 check_package_install(){
-    dpkg -s $1 &> /dev/null
-
-    if [ $? -eq 0 ]; then
-        return 1
-    else
-        return 0
-    fi
+    if [ $UBUNTU -eq 1 ]; then
+        dpkg -s $1 &> /dev/null
+        if [ $? -eq 0 ]; then
+            return 1
+        else
+            return 0
+        fi
+    elif [ $CENTOS -eq 1 ]; then
+        if yum list installed "$1" >/dev/null 2>&1; then
+            return 1
+        else
+            return 0
+        fi
+    fi  
 }
 
-install_package(){
-   sudo apt-get install -y $1  
-}
+
+
+
 install_dependency(){
-    sudo apt-get update
+    update_os
     echo "Checking packages to install..."
     declare -a arr=("curl" "wget" "netcat-openbsd")
+    if [ $UBUNTU -eq 1 ]; then
+        declare -a arr=("curl" "wget" "netcat-openbsd")
+    elif [ $CENTOS -eq 1 ]; then
+        declare -a arr=("curl" "wget" "nmap-ncat.x86_64")
+    fi
+
     for pkg in "${arr[@]}"
     do
         check_package_install $pkg
@@ -456,7 +555,6 @@ setup_environment(){
     install_dependency
     setup_docker
     setup_supervisor
-    setup_nginx
     setup_install_path
 }
 
@@ -523,11 +621,31 @@ echo "##########################################################################
 echo "###                           INSTALL TOMOX SDK                                     ###"
 echo "#######################################################################################"
 
+
+os=$(awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }')
+if [[ "$os" == *"ubuntu"* ]]; then
+    UBUNTU=1
+    echo "Preparing install on ubuntu os"
+fi
+if [[ "$os" == *"debian"* ]]; then
+    UBUNTU=1
+    echo "Preparing install on debian os"
+fi
+if [[ "$os" == *"centos"* ]]; then
+    CENTOS=1
+     echo "Preparing install on centos os"
+fi
+
+if [ $UBUNTU -eq 0 ] && [ $CENTOS -eq 0 ]; then
+    echo "Script doesnt support this operation system"
+    exit 1
+fi
 user_config_sdk
 user_config_fullnode
 
 setup_environment
 #supervisord_stop_sdk
+
 
 echo "*****************INSTALL TOMOX FULLNODE*********************"
 check_open_port 8545
@@ -549,7 +667,8 @@ for (( c=1; c<=15; c++ ))
 do  
    check_open_port 8545
    if [ "$?" -eq 1 ]; then
-        sleep 5
+        echo "Waiting for fullnode to start..."
+        sleep 15
         break
    fi
    echo "Waiting for fullnode to start..."
@@ -575,7 +694,7 @@ echo "*****************INSTALL TOMOX SDK UI*********************"
 check_open_port 80
 if [ "$?" -eq 1 ]; then
     while true; do
-        read -p "A program isrunning on port 80, if continue you must stop it first. Continue installing? (Y/N)" yn
+        read -p "A program is running on port 80, if continue you must stop it first. Continue installing? (Y/N)" yn
         case $yn in
             [Yy]* ) setup_sdk_ui; break;;
             [Nn]* ) break;;
