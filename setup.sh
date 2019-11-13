@@ -577,25 +577,45 @@ progressbar() {
 }
 
 show_install_status(){
-    sleep 10
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    NC='\033[0m'
     echo "############################# Waiting for checking installed status ######################"
+    sleep 10
     check_open_port 8080
     if [ "$?" -eq 1 ]; then
-        echo "Tomox SDK backend is running on port 8080"
+        printf "${GREEN}Tomox SDK backend is running on port 8080${NC}\n"
     else
-        echo "Tomox SDK backend is not running"
+        echo "Tomox SDK backend is not running, try to start..."
+        supervisor_restart_sdk
+        sleep 5
+        started=false
+        for (( c=1; c<=5; c++ ))
+        do  
+            check_open_port 8080
+            if [ "$?" -eq 1 ]; then
+                    printf "${GREEN}Tomox SDK backend is running on port 8080${NC}\n"
+                    started=true
+                    break
+            fi
+            echo "Waiting for sdk backend to start..."
+            sleep 2
+        done
+        if [ "$started" = false ] ; then
+            printf "${RED}Tomox SDK backend is not running!${NC}\n"
+        fi
     fi
 
     check_open_port 80
     if [ "$?" -eq 1 ]; then
-        echo "Tomox UI is running on port 80"
+        printf "${GREEN}Tomox UI is running on port 80${NC}\n"
     else
-        echo "Tomox UI is not running"
+        printf "${RED}Tomox UI is not running!${NC}\n"
     fi
 
     check_open_port 8545
     if [ "$?" -eq 1 ]; then
-        echo "Tomox fullnode in running"
+        printf "${GREEN}Tomox fullnode in running${NC}\n"
         echo "You have to wait for the synchronization blocks process"
         echo "Synchronization process is running in background, press any key to exit showing synchronization status"
         while [ true ] ; do
@@ -611,7 +631,7 @@ show_install_status(){
         done
         echo "Finish!"
     else
-        echo "Tomox fullnode in not running"
+        printf "${RED}Tomox fullnode in not running!${NC}\n"
 
     fi
 }
