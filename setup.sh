@@ -709,7 +709,7 @@ setup_environment
 #supervisord_stop_sdk
 
 
-echo "*****************INSTALL TOMOX FULLNODE*********************"
+echo "*****************INSTALL/UPDATE TOMOX FULLNODE*********************"
 check_open_port 8545
 if [ "$?" -eq 1 ]; then
     while true; do
@@ -724,7 +724,7 @@ else
     setup_fullnode
 fi
 
-echo "*****************INSTALL TOMOX SDK BACKEND*********************"
+echo "*****************INSTALL/UPDATE TOMOX SDK BACKEND*********************"
 for (( c=1; c<=15; c++ ))
 do  
    check_open_port 8545
@@ -751,7 +751,7 @@ else
     setup_sdk
 fi
 
-echo "*****************INSTALL TOMOX SDK UI*********************"
+echo "*****************INSTALL/UPDATE TOMOX SDK UI*********************"
 
 check_open_port 80
 if [ "$?" -eq 1 ]; then
