@@ -183,10 +183,17 @@ reset_rabbitmq(){
 }
 
 setup_rabbitmq(){
-    reset_rabbitmq $RABBITMQ_PORT
+    check_running_docker_service rabbitmq
+    if [ $? -eq 0 ]; then
+        reset_rabbitmq $RABBITMQ_PORT
+    fi
+    
 }
 setup_mongodb(){
-    reset_mongodb $MONGODB_PORT
+    check_running_docker_service mongodb
+    if [ $? -eq 0 ]; then
+        reset_mongodb $MONGODB_PORT
+    fi
 }
 stop_fullnode(){
     sudo supervisorctl stop tomox-node
@@ -200,6 +207,9 @@ supervisord_restart_fullnode(){
 supervisord_stop_fullnode(){
     sudo supervisorctl stop tomox-node
 }
+supervisord_start_fullnode(){
+    sudo supervisorctl start tomox-node
+}
 supervisord_stop_sdk(){
     sudo supervisorctl stop tomox-sdk
 }
@@ -207,14 +217,21 @@ supervisord_stop_sdk(){
 download_chain_data(){
     echo "Download chain data, it takes time!"
     wget -O $INSTALL_PATH"/tomox/chaindata-testnet.tar" $TOMOX_CHAIN_DATA_URL
-    echo "extracting chain data ......"
+    echo "Extracting chain data ......"
     tar xf $INSTALL_PATH"/tomox/chaindata-testnet.tar" -C $INSTALL_PATH"/tomox/"
 
+}
+download_tomo_binary(){
+    echo "Downloading new tomo binary..."
+    wget -O $INSTALL_PATH"/tomox/tomo" $FULLNODE_RELEASE_URL
+    chmod +x $INSTALL_PATH"/tomox/tomo"
 }
 start_fullnode(){
     default_chaindata=$INSTALL_PATH"/tomox/data"
     if [ "$FULLNODE_CHAIN_DATA" != "$default_chaindata" ]; then
         echo "Start fullnode with specific user chain data"
+        supervisord_stop_fullnode
+        download_tomo_binary
         supervisord_restart_fullnode
     else
         if ! test -d $INSTALL_PATH"/tomox/data"; then
@@ -222,10 +239,10 @@ start_fullnode(){
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
                 download_chain_data
             fi
-            wget -O $INSTALL_PATH"/tomox/tomo" $FULLNODE_RELEASE_URL
-            chmod +x $INSTALL_PATH"/tomox/tomo"
+            supervisord_stop_fullnode
+            download_tomo_binary
             curl -L $TOMOX_GENESIS -o $INSTALL_PATH"/tomox/genesis.json"
-            #stop_fullnode
+        
             echo "">$INSTALL_PATH"/tomox/passparser"
             $INSTALL_PATH"/tomox/tomo" account new --datadir $FULLNODE_CHAIN_DATA --password $INSTALL_PATH"/tomox/passparser"
             echo $FULLNODE_CHAIN_DATA
@@ -237,7 +254,13 @@ start_fullnode(){
 
             supervisord_restart_fullnode
         else
-            supervisord_restart_fullnode
+            echo "Preparing updated tomo fullnode"
+            echo "Stopping tomo fullnode..."
+            supervisord_stop_fullnode
+            sleep 2
+            download_tomo_binary
+            echo "Starting updated tomo fullnode"
+            supervisord_start_fullnode
         fi
     fi
 }
@@ -438,13 +461,13 @@ setup_supervisor(){
 
     check_running_service $name
     if [ "$?" -eq 0 ]; then
-        echo "supervisor is not running"
+        echo "Supervisor is not running"
         check_installed_service $name
         if [ "$?" -eq 1 ]; then
-            echo "service supervisor is installed but not running, starts it"
+            echo "Service supervisor is installed but not running, starts it"
             start_service $name
         else
-            echo "service supervisor is not installed, installs it"
+            echo "Service supervisor is not installed, installs it"
             install_supervisor
         fi
     fi
@@ -453,13 +476,13 @@ setup_supervisor(){
 setup_nginx(){
     check_running_service nginx
     if [ "$?" -eq 0 ]; then
-        echo "nginx is not running"
+        echo "Nginx is not running"
         check_installed_service nginx
         if [ "$?" -eq 1 ]; then
-            echo "service nginx is installed but not running, starts it"
+            echo "Service nginx is installed but not running, starts it"
             start_service nginx
         else
-            echo "service nginx is not installed, installs it"
+            echo "Service nginx is not installed, installs it"
             install_nginx
         fi
 
@@ -509,6 +532,25 @@ setup_sdk_ui(){
 
 }
 
+update_sdk_ui(){
+    setup_nginx
+    cd $PWD
+    url=$SDK_UI_RELEASE_URL
+    wget -O "tomox-sdk-ui.tar.gz" $url
+    tar xzf "tomox-sdk-ui.tar.gz"
+    rm -rf "tomox-sdk-ui.tar.gz"
+    if [ $UBUNTU -eq 1 ]; then
+        html_path=$TOMOX_UI_HTML_PATH
+    elif [ $CENTOS -eq 1 ]; then
+        html_path="/usr/share/nginx/tomox-sdk-ui"
+    fi
+    sudo mv build $html_path
+    if [ $CENTOS -eq 1 ]; then
+        setenforce Permissive
+    fi
+    restart_service nginx
+
+}
 check_package_install(){
     if [ $UBUNTU -eq 1 ]; then
         dpkg -s $1 &> /dev/null
@@ -580,7 +622,7 @@ show_install_status(){
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     NC='\033[0m'
-    echo "############################# Waiting for checking installed status ######################"
+    echo "********************** Waiting for checking installed status **********************"
     sleep 10
     check_open_port 8080
     if [ "$?" -eq 1 ]; then
@@ -615,7 +657,7 @@ show_install_status(){
 
     check_open_port 8545
     if [ "$?" -eq 1 ]; then
-        printf "${GREEN}Tomox fullnode in running${NC}\n"
+        printf "${GREEN}Tomox Fullnode in running${NC}\n"
         echo "You have to wait for the synchronization blocks process"
         echo "Synchronization process is running in background, press any key to exit showing synchronization status"
         while [ true ] ; do
@@ -657,7 +699,7 @@ if [[ "$os" == *"centos"* ]]; then
 fi
 
 if [ $UBUNTU -eq 0 ] && [ $CENTOS -eq 0 ]; then
-    echo "Script doesnt support this operation system"
+    echo "Script doesn't support this operation system"
     exit 1
 fi
 user_config_sdk
@@ -671,7 +713,7 @@ echo "*****************INSTALL TOMOX FULLNODE*********************"
 check_open_port 8545
 if [ "$?" -eq 1 ]; then
     while true; do
-        read -p "Fullnode may be running, if continue you must stop it first. Continue installing? (Y/N)" yn
+        read -p "Fullnode is running, do you want to update it? (Y/N)" yn
         case $yn in
             [Yy]* ) setup_fullnode; break;;
             [Nn]* ) break;;
@@ -698,7 +740,7 @@ done
 check_open_port 8080
 if [ "$?" -eq 1 ]; then
     while true; do
-        read -p "A program is running on port 8080, if continue you must stop it first. Continue installing? (Y/N)" yn
+        read -p "Tomox SDK Backend is running on port 8080, do you want to update it? (Y/N)" yn
         case $yn in
             [Yy]* ) setup_sdk; break;;
             [Nn]* ) break;;
@@ -714,9 +756,9 @@ echo "*****************INSTALL TOMOX SDK UI*********************"
 check_open_port 80
 if [ "$?" -eq 1 ]; then
     while true; do
-        read -p "A program is running on port 80, if continue you must stop it first. Continue installing? (Y/N)" yn
+        read -p "Tomox SDK UI is running on port 80, do you want to update it?" yn
         case $yn in
-            [Yy]* ) setup_sdk_ui; break;;
+            [Yy]* ) update_sdk_ui; break;;
             [Nn]* ) break;;
             * ) echo "Please answer yes or no";;
         esac
