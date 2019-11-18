@@ -522,6 +522,7 @@ setup_sdk_ui(){
     elif [ $CENTOS -eq 1 ]; then
         html_path="/usr/share/nginx/tomox-sdk-ui"
     fi
+    sudo rm -rf $html_path
     sudo mv build $html_path
     config_tomox_ui_nginx
 
@@ -544,6 +545,7 @@ update_sdk_ui(){
     elif [ $CENTOS -eq 1 ]; then
         html_path="/usr/share/nginx/tomox-sdk-ui"
     fi
+    sudo rm -rf $html_path
     sudo mv build $html_path
     if [ $CENTOS -eq 1 ]; then
         setenforce Permissive
@@ -616,6 +618,21 @@ progressbar() {
     done
 
     printf "]"
+}
+
+uninstall(){
+    # uninstall full node
+    echo "Stopping services..."
+    supervisord_stop_fullnode
+    supervisord_stop_sdk
+    docker kill mongodb
+    docker kill rabbitmq
+    docker rm mongodb
+    docker rm rabbitmq
+    sleep 3
+    echo "Removing files..."
+    rm -rf $INSTALL_PATH
+    echo "Finished!"
 }
 
 show_install_status(){
@@ -702,12 +719,20 @@ if [ $UBUNTU -eq 0 ] && [ $CENTOS -eq 0 ]; then
     echo "Script doesn't support this operation system"
     exit 1
 fi
+
+
+if [ "$1" = "uninstall" ]; then
+    echo "Uninstall..."
+    uninstall
+    exit 0
+fi
+
+
 user_config_sdk
 user_config_fullnode
 
 setup_environment
 #supervisord_stop_sdk
-
 
 echo "*****************INSTALL/UPDATE TOMOX FULLNODE*********************"
 check_open_port 8545
