@@ -19,7 +19,7 @@ SDK_UI_PORT=$SDK_UI_PORT_DEFAULT
 INSTALL_PATH=$INSTALL_PATH_DEFAULT
 
 EXCHANGE_ADDRESS=""
-RELAYER_SC_ADDRESS="0xe7c16037992bEcAFaeeE779Dacaf8991637953F3"
+RELAYER_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
 
 SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
 SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.testnet.tar.gz"
