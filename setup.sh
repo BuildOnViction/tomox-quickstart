@@ -30,7 +30,7 @@ TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/
 
 PWD=$(pwd)
 
-DOWNLOAD_CHAIN_DATA_ENABLED=1
+DOWNLOAD_CHAIN_DATA_ENABLED=0
 
 TOMOX_UI_HTML_PATH="/var/www/tomox-sdk-ui"
 NODE_NAME=$USER
