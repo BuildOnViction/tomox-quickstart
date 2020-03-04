@@ -25,7 +25,7 @@ SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/downloa
 SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.testnet.tar.gz"
 FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
 FULLNODE_CHAIN_DATA=$INSTALL_PATH"/tomox/data"
-TOMOX_GENESIS="https://github.com/tomochain/tomochain/blob/testnet/genesis/testnet.json"
+TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/testnet/genesis/testnet.json"
 TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
 
 PWD=$(pwd)
