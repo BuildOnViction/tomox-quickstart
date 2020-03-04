@@ -2,7 +2,7 @@
 
 # Version
 TOMOCHAIN_VERSION=v2.1.1-beta
-TOMOX_SDK_VERSION=v1.0.1-beta
+TOMOX_SDK_VERSION=v1.1.2-beta
 TOMOX_SDK_UI_VERSION=v1.0.1-beta
 
 # Default service port
