@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Version
-TOMOCHAIN_VERSION=v2.0.2-beta
+TOMOCHAIN_VERSION=v2.1.1-beta
 TOMOX_SDK_VERSION=v1.0.1-beta
 TOMOX_SDK_UI_VERSION=v1.0.1-beta
 
@@ -25,7 +25,7 @@ SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/downloa
 SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.testnet.tar.gz"
 FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
 FULLNODE_CHAIN_DATA=$INSTALL_PATH"/tomox/data"
-TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/testnet.json"
+TOMOX_GENESIS="https://github.com/tomochain/tomochain/blob/testnet/genesis/testnet.json"
 TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
 
 PWD=$(pwd)
