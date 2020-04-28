@@ -1,7 +1,0 @@
-[program:tomox-node]
-command=tomobinarypath --bootnodes "enode://ba966140e161ad416a7bd7c75dc695e0a41232723e2b19cbbf651883ef5e8f2528801b17b9d63152814d219a58a4fcc3e3c877486e64057523f6714092348efa@195.154.150.210:30301" --networkid 89 --rpc --rpccorsdomain "*" --rpcaddr 0.0.0.0 --rpcport 8545 --rpcvhosts "*" --ws --wsaddr 0.0.0.0 --wsport 8546 --wsorigins "*" --rpcapi "personal,db,eth,net,web3,txpool,miner,tomox" --announce-txs --tomo-testnet --tomox.dbengine "mongodb" --ethstats "nodename:9tlu4EymcTrEzaqWpSxh3KSa926au8@stats.testnet.tomochain.com" --datadir tomoxdatadir
-autostart=true
-autorestart=true
-directory=tomoxdirectory
-stderr_logfile=installpath/logs/node.log
-stdout_logfile=installpath/logs/node.log

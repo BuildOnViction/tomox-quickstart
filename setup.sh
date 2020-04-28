@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+IS_MAINNET=0
+if [[ "$1" == "mainnet" ]]; then
+    IS_MAINNET=1
+fi
 # Version
 TOMOCHAIN_VERSION=v2.1.1-beta
 TOMOX_SDK_VERSION=v1.1.2-beta
@@ -19,18 +24,38 @@ SDK_UI_PORT=$SDK_UI_PORT_DEFAULT
 INSTALL_PATH=$INSTALL_PATH_DEFAULT
 
 EXCHANGE_ADDRESS=""
-RELAYER_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
 
+
+RELAYER_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
 SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
 SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.testnet.tar.gz"
 FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
 FULLNODE_CHAIN_DATA=$INSTALL_PATH"/tomox/data"
+TOMOCHAIN_FULLNODE="https://testnet.tomochain.com"
 TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/testnet/genesis/testnet.json"
 TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
+BOOTNODES="enode://ba966140e161ad416a7bd7c75dc695e0a41232723e2b19cbbf651883ef5e8f2528801b17b9d63152814d219a58a4fcc3e3c877486e64057523f6714092348efa@195.154.150.210:30301"
+NETWORD_ID=89
+DOWNLOAD_CHAIN_DATA_ENABLED=0
+STATS="9tlu4EymcTrEzaqWpSxh3KSa926au8@stats.testnet.tomochain.com"
+
+if [ $IS_MAINNET -eq 1 ]; then
+    echo "Config mainnet parameter..."
+    RELAYER_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
+    TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
+    TOMOX_CHAIN_DATA_URL="http://chaindata.tomotools.com:30304/20200426_block_19872275.tar.gz"
+    BOOTNODES="enode://97f0ca95a653e3c44d5df2674e19e9324ea4bf4d47a46b1d8560f3ed4ea328f725acec3fcfcb37eb11706cf07da669e9688b091f1543f89b2425700a68bc8876@3.212.20.0:30301"
+    NETWORD_ID=88
+    DOWNLOAD_CHAIN_DATA_ENABLED=1
+    STATS="getty-site-pablo-auger-room-sos-blair-shin-whiz-delhi@stats.tomochain.com"
+    TOMOCHAIN_FULLNODE="https://rpc.tomochain.com"
+fi
+RPCPORT=8545
+WSPORT=8546
 
 PWD=$(pwd)
 
-DOWNLOAD_CHAIN_DATA_ENABLED=0
+
 
 TOMOX_UI_HTML_PATH="/var/www/tomox-sdk-ui"
 NODE_NAME=$USER
@@ -126,17 +151,20 @@ install_nginx(){
         install_package nginx
     fi  
     
-}
-install_supervisor(){
-    if [ $UBUNTU -eq 1 ]; then
-        install_package supervisor
-    elif [ $CENTOS -eq 1 ]; then
-        install_package supervisor
-        restart_service supervisord
-    fi
-     
-    
 } 
+
+install_nodejs(){
+    if [ $UBUNTU -eq 1 ]; then
+        sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+        sudo apt install -y nodejs
+        sudo npm install -g pm2
+    elif [ $CENTOS -eq 1 ]; then
+        curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
+        sudo yum install nodejs
+        sudo npm install -g pm2
+    fi
+}
+
 install_docker(){
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo chmod +x get-docker.sh
@@ -195,23 +223,61 @@ setup_mongodb(){
         reset_mongodb $MONGODB_PORT
     fi
 }
-stop_fullnode(){
-    sudo supervisorctl stop tomox-node
+
+
+pm2_stop_fullnode(){
+    pm2 delete tomox-fullnode
 }
 
-supervisord_restart_fullnode(){
-    sudo supervisorctl reread
-    sudo supervisorctl update
-    sudo supervisorctl restart tomox-node
-}
-supervisord_stop_fullnode(){
-    sudo supervisorctl stop tomox-node
-}
-supervisord_start_fullnode(){
-    sudo supervisorctl start tomox-node
-}
-supervisord_stop_sdk(){
-    sudo supervisorctl stop tomox-sdk
+pm2_start_fullnode(){
+    ACTION=$1
+    if [ "$ACTION" = "new" ]; then
+        $INSTALL_PATH"/tomox/tomo" account new --datadir $FULLNODE_CHAIN_DATA --password $INSTALL_PATH"/tomox/passparser.txt"
+        $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
+    fi
+    if [ $IS_MAINNET -eq 0 ]; then
+        pm2 start $INSTALL_PATH"/tomox/tomo" -f --name tomox-fullnode \
+        -- \
+        --datadir $FULLNODE_CHAIN_DATA \
+        --bootnodes $BOOTNODES \
+        --networkid $NETWORD_ID \
+        --rpc \
+        --rpccorsdomain "*" \
+        --rpcaddr 0.0.0.0 \
+        --rpcport $RPCPORT \
+        --rpcvhosts "*" \
+        --ws \
+        --wsaddr 0.0.0.0 \
+        --wsport $WSPORT \
+        --wsorigins "*" \
+        --rpcapi "personal,db,eth,net,web3,txpool,miner,tomox" \
+        --announce-txs \
+        --tomo-testnet \
+        --tomox.dbengine "mongodb" \
+        --verbosity 4 \
+        --ethstats $NODE_NAME":"$STATS
+    else
+        pm2 start $INSTALL_PATH"/tomox/tomo" -f --name tomox-fullnode \
+        -- \
+        --datadir $FULLNODE_CHAIN_DATA \
+        --bootnodes $BOOTNODES \
+        --networkid $NETWORD_ID \
+        --rpc \
+        --rpccorsdomain "*" \
+        --rpcaddr 0.0.0.0 \
+        --rpcport $RPCPORT \
+        --rpcvhosts "*" \
+        --ws \
+        --wsaddr 0.0.0.0 \
+        --wsport $WSPORT \
+        --wsorigins "*" \
+        --rpcapi "personal,db,eth,net,web3,txpool,miner,tomox" \
+        --announce-txs \
+        --tomox.dbengine "mongodb" \
+        --verbosity 4 \
+        --ethstats $NODE_NAME":"$STATS
+    fi
+    
 }
 
 download_chain_data(){
@@ -230,37 +296,33 @@ start_fullnode(){
     default_chaindata=$INSTALL_PATH"/tomox/data"
     if [ "$FULLNODE_CHAIN_DATA" != "$default_chaindata" ]; then
         echo "Start fullnode with specific user chain data"
-        supervisord_stop_fullnode
+        pm2_stop_fullnode
         download_tomo_binary
-        supervisord_restart_fullnode
+        pm2_start_fullnode restart
     else
         if ! test -d $INSTALL_PATH"/tomox/data"; then
-            write_tomoxnode_supervisor
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
                 download_chain_data
             fi
-            supervisord_stop_fullnode
+            pm2_stop_fullnode
             download_tomo_binary
+            echo "download gennesis: "$TOMOX_GENESIS
             curl -L $TOMOX_GENESIS -o $INSTALL_PATH"/tomox/genesis.json"
-        
-            echo "">$INSTALL_PATH"/tomox/passparser"
-            $INSTALL_PATH"/tomox/tomo" account new --datadir $FULLNODE_CHAIN_DATA --password $INSTALL_PATH"/tomox/passparser"
-            echo $FULLNODE_CHAIN_DATA
-            $INSTALL_PATH"/tomox/tomo" init $INSTALL_PATH"/tomox/genesis.json" --datadir $FULLNODE_CHAIN_DATA
+            echo "">$INSTALL_PATH"/tomox/passparser.txt"
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
                 rm -rf $INSTALL_PATH"/tomox/data/tomo/chaindata"
                 mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
             fi 
 
-            supervisord_restart_fullnode
+            pm2_start_fullnode new
         else
             echo "Preparing updated tomo fullnode"
             echo "Stopping tomo fullnode..."
-            supervisord_stop_fullnode
+            pm2_stop_fullnode
             sleep 2
             download_tomo_binary
             echo "Starting updated tomo fullnode"
-            supervisord_start_fullnode
+            pm2_start_fullnode restart
         fi
     fi
 }
@@ -303,95 +365,27 @@ user_config_fullnode(){
     # fi
     
 }
-supervisor_restart_sdk(){
-    sudo supervisorctl reread
-    sudo supervisorctl update
-    sudo supervisorctl restart tomox-sdk
+pm2_start_sdk(){
+    P=$(pwd)
+    cd $INSTALL_PATH
+    pm2 start ./tomox-sdk --name tomox-sdk
+    cd $P
+}
+pm2_stop_sdk(){
+    pm2 delete tomox-sdk
+}
+pm2_restart_sdk(){
+    pm2 restart tomox-sdk
 }
 start_sdk(){
+    pm2_stop_sdk
     url=$SDK_BACKEND_RELEASE_URL
     rm -f $INSTALL_PATH"/tomox-sdk"
     wget -O $INSTALL_PATH"/tomox-sdk" $url
     chmod +x $INSTALL_PATH"/tomox-sdk"
-    write_sdk_supervisor $INSTALL_PATH
     sdk_write_config
-    supervisor_restart_sdk
+    pm2_start_sdk
     
-}
-# param 1: path to sdk binary
-write_sdk_supervisor(){
-    supervisor_conf="/etc/supervisor/conf.d/tomox-sdk.conf"
-    if [ $UBUNTU -eq 1 ]; then
-        supervisor_conf="/etc/supervisor/conf.d/tomox-sdk.conf"
-    elif [ $CENTOS -eq 1 ]; then
-        supervisor_conf="/etc/supervisord.d/tomox-sdk.ini"
-    fi
-
-    installpath_patern="tomoxinstallpath"
-    installpath=$INSTALL_PATH
-    
-    cp tomoxsdk.supervisord tomoxsdk.supervisord.bk 
-    sed -i "s|${installpath_patern}|${installpath}|g" tomoxsdk.supervisord.bk
-    sudo mv tomoxsdk.supervisord.bk $supervisor_conf
-}
-
-write_tomoxnode_supervisor(){
-    supervisor_conf="/etc/supervisor/conf.d/tomox-node.conf"
-    if [ $UBUNTU -eq 1 ]; then
-        supervisor_conf="/etc/supervisor/conf.d/tomox-node.conf"
-    elif [ $CENTOS -eq 1 ]; then
-        supervisor_conf="/etc/supervisord.d/tomox-node.ini"
-    fi
-    cp tomoxnode.supervisord tomoxnode.supervisord.bk 
-    tomo_patern="tomobinarypath"
-    tomo=$INSTALL_PATH"/tomox/tomo"
-    sed -i "s|${tomo_patern}|${tomo}|g" tomoxnode.supervisord.bk
-
-    datadir_patern="tomoxdatadir"
-    datadir=$FULLNODE_CHAIN_DATA
-    sed -i "s|${datadir_patern}|${datadir}|g" tomoxnode.supervisord.bk
-
-    tomoxdir_patern="tomoxdirectory"
-    tomoxdir=$INSTALL_PATH"/tomox"
-    sed -i "s|${tomoxdir_patern}|${tomoxdir}|g" tomoxnode.supervisord.bk
-
-    path_patern="installpath"
-    path=$INSTALL_PATH
-    sed -i "s|${path_patern}|${path}|g" tomoxnode.supervisord.bk
-
-    name_patern="nodename"
-    name=$NODE_NAME
-    sed -i "s|${name_patern}|${name}|g" tomoxnode.supervisord.bk
-    sudo mv tomoxnode.supervisord.bk $supervisor_conf
-    
-}
-
-write_tomoxnode_bash(){
-    tomobashpath=$INSTALL_PATH"/tomox/tomox.sh"
-    cp tomox.bash tomox.bash.bk 
-    tomo_patern="tomobinarypath"
-    tomo=$INSTALL_PATH"/tomox/tomo"
-    sed -i "s|${tomo_patern}|${tomo}|g" tomox.bash.bk
-
-    datadir_patern="tomoxdatadir"
-    datadir=$FULLNODE_CHAIN_DATA
-    sed -i "s|${datadir_patern}|${datadir}|g" tomox.bash.bk
-
-    tomoxdir_patern="tomoxdirectory"
-    tomoxdir=$INSTALL_PATH"/tomox"
-    sed -i "s|${tomoxdir_patern}|${tomoxdir}|g" tomox.bash.bk
-
-    path_patern="installpath"
-    path=$INSTALL_PATH
-    sed -i "s|${path_patern}|${path}|g" tomox.bash.bk
-
-    sudo mv tomox.bash.bk $tomobashpath
-    
-}
-run_tomox_bash(){
-    cd $INSTALL_PATH"/tomox"
-    nohup bash tomox.sh &
-    nohup bash tomox.sh &> ../logs/fullnode.log&
 }
 
 setup_sdk(){
@@ -451,27 +445,7 @@ setup_docker(){
 
     fi
 }
-setup_supervisor(){
-    name="supervisor"
-    if [ $UBUNTU -eq 1 ]; then
-        name="supervisor"
-    elif [ $CENTOS -eq 1 ]; then
-        name="supervisord"
-    fi
 
-    check_running_service $name
-    if [ "$?" -eq 0 ]; then
-        echo "Supervisor is not running"
-        check_installed_service $name
-        if [ "$?" -eq 1 ]; then
-            echo "Service supervisor is installed but not running, starts it"
-            start_service $name
-        else
-            echo "Service supervisor is not installed, installs it"
-            install_supervisor
-        fi
-    fi
-}
 
 setup_nginx(){
     check_running_service nginx
@@ -489,7 +463,6 @@ setup_nginx(){
     fi
     
 }
-
 
 config_tomox_ui_nginx(){
     nginx_conf="/etc/nginx/sites-enabled/tomox-sdk.conf"
@@ -597,8 +570,9 @@ install_dependency(){
 }
 setup_environment(){
     install_dependency
+    install_nodejs
     setup_docker
-    setup_supervisor
+    setup_pm2
     setup_install_path
 }
 
@@ -623,8 +597,8 @@ progressbar() {
 uninstall(){
     # uninstall full node
     echo "Stopping services..."
-    supervisord_stop_fullnode
-    supervisord_stop_sdk
+    pm2_stop_fullnode
+    pm2_stop_sdk
     docker kill mongodb
     docker kill rabbitmq
     docker rm mongodb
@@ -646,7 +620,7 @@ show_install_status(){
         printf "${GREEN}Tomox SDK backend is running on port 8080${NC}\n"
     else
         echo "Tomox SDK backend is not running, try to start..."
-        supervisor_restart_sdk
+        pm2_restart_sdk
         sleep 5
         started=false
         for (( c=1; c<=5; c++ ))
@@ -682,7 +656,7 @@ show_install_status(){
             if [ $? = 0 ] ; then
                 exit ;
             else
-                chain_block=`$INSTALL_PATH"/tomox/tomo" attach https://testnet.tomochain.com --exec 'eth.blockNumber'`
+                chain_block=`$INSTALL_PATH"/tomox/tomo" attach "$TOMOCHAIN_FULLNODE" --exec 'eth.blockNumber'`
                 myfullnode_block=`$INSTALL_PATH"/tomox/tomo" attach http://localhost:8545 --exec 'eth.blockNumber'`
                 progressbar $myfullnode_block $chain_block
                 sleep 5
@@ -697,7 +671,11 @@ show_install_status(){
 
 
 echo "#######################################################################################"
-echo "###                           INSTALL TOMOX SDK                                     ###"
+if [ $IS_MAINNET -eq 1 ]; then
+echo "###                           INSTALL TOMOX MAINNET                                 ###"
+else
+echo "###                           INSTALL TOMOX TESTNET                                 ###"
+fi
 echo "#######################################################################################"
 
 
@@ -732,7 +710,7 @@ user_config_sdk
 user_config_fullnode
 
 setup_environment
-#supervisord_stop_sdk
+
 
 echo "*****************INSTALL/UPDATE TOMOX FULLNODE*********************"
 check_open_port 8545
