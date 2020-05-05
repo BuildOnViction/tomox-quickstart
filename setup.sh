@@ -586,7 +586,6 @@ setup_environment(){
     install_dependency
     install_nodejs
     setup_docker
-    setup_pm2
     setup_install_path
 }
 
