@@ -776,7 +776,7 @@ echo "*****************INSTALL/UPDATE TOMOX SDK UI*********************"
 check_open_port 80
 if [ "$?" -eq 1 ]; then
     while true; do
-        read -p "Tomox SDK UI is running on port 80, do you want to update it?" yn
+        read -p "Tomox SDK UI is running on port 80, do you want to update it? (Y/N)" yn
         case $yn in
             [Yy]* ) update_sdk_ui; break;;
             [Nn]* ) break;;
