@@ -659,7 +659,7 @@ show_install_status(){
         printf "${RED}Tomox UI is not running!${NC}\n"
     fi
 
-    check_open_port 8545
+    check_open_port $RPCPORT
     if [ "$?" -eq 1 ]; then
         printf "${GREEN}Tomox Fullnode in running${NC}\n"
         echo "You have to wait for the synchronization blocks process"
@@ -726,7 +726,7 @@ setup_environment
 
 
 echo "*****************INSTALL/UPDATE TOMOX FULLNODE*********************"
-check_open_port 8545
+check_open_port $RPCPORT
 if [ "$?" -eq 1 ]; then
     while true; do
         read -p "Fullnode is running, do you want to update it? (Y/N)" yn
@@ -743,7 +743,7 @@ fi
 echo "*****************INSTALL/UPDATE TOMOX SDK BACKEND*********************"
 for (( c=1; c<=15; c++ ))
 do  
-   check_open_port 8545
+   check_open_port $RPCPORT
    if [ "$?" -eq 1 ]; then
         echo "Waiting for fullnode to start..."
         sleep 15
