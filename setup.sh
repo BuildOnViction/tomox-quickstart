@@ -52,7 +52,11 @@ if [ $IS_MAINNET -eq 1 ]; then
 
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
     TOMOX_CHAIN_DATA_URL="http://chaindata.tomotools.com:30304/20200426_block_19872275.tar.gz"
+
+    SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
+    FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
     SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.tar.gz"
+    
     BOOTNODES="enode://97f0ca95a653e3c44d5df2674e19e9324ea4bf4d47a46b1d8560f3ed4ea328f725acec3fcfcb37eb11706cf07da669e9688b091f1543f89b2425700a68bc8876@3.212.20.0:30301"
     NETWORD_ID=88
     DOWNLOAD_CHAIN_DATA_ENABLED=1
