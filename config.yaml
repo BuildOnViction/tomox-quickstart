@@ -1,10 +1,12 @@
 coingecko_api_url: https://api.coingecko.com/api/v3
 db_name: tomodex
 env: dev
+log_level: DEBUG
 error_file: config/errors.yaml
 tomochain:
   exchange_address: coinsebaseaddress
-  contract_address: relayersmartcontract
+  exchange_contract_address: exchangesmartcontract
+  lending_contract_address: lendingsmartcontract
   http_url: http://localhost:8545
   ws_url: ws://localhost:8546
 jwt_signing_key: QfCAH04Cob7b71QCqy738vw5XGSnFZ9d

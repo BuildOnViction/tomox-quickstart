@@ -26,7 +26,9 @@ INSTALL_PATH=$INSTALL_PATH_DEFAULT
 EXCHANGE_ADDRESS=""
 
 
-RELAYER_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
+EXCHANGE_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
+LENDING_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
+
 SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
 SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.testnet.tar.gz"
 FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
@@ -41,9 +43,16 @@ STATS="9tlu4EymcTrEzaqWpSxh3KSa926au8@stats.testnet.tomochain.com"
 
 if [ $IS_MAINNET -eq 1 ]; then
     echo "Config mainnet parameter..."
-    RELAYER_SC_ADDRESS="0xA1996F69f47ba14Cb7f661010A7C31974277958c"
+    EXCHANGE_SC_ADDRESS="0x16c63b79f9C8784168103C0b74E6A59EC2de4a02"
+    LENDING_SC_ADDRESS="0x7d761afd7ff65a79e4173897594a194e3c506e57"
+
+    TOMOCHAIN_VERSION=v2.2.1
+    TOMOX_SDK_VERSION=v1.2.0
+    TOMOX_SDK_UI_VERSION=v1.2.1
+
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
     TOMOX_CHAIN_DATA_URL="http://chaindata.tomotools.com:30304/20200426_block_19872275.tar.gz"
+    SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.tar.gz"
     BOOTNODES="enode://97f0ca95a653e3c44d5df2674e19e9324ea4bf4d47a46b1d8560f3ed4ea328f725acec3fcfcb37eb11706cf07da669e9688b091f1543f89b2425700a68bc8876@3.212.20.0:30301"
     NETWORD_ID=88
     DOWNLOAD_CHAIN_DATA_ENABLED=1
@@ -177,11 +186,16 @@ install_docker(){
 sdk_write_config(){
     coinsebase_patern="coinsebaseaddress"
     coinbase=$EXCHANGE_ADDRESS
-    sc_patern="relayersmartcontract"
-    sc=$RELAYER_SC_ADDRESS
+    exchange_sc_patern="exchangesmartcontract"
+    exchange_sc=$EXCHANGE_SC_ADDRESS
+    lending_sc_patern="lendingsmartcontract"
+    lending_sc=$LENDING_SC_ADDRESS
+
     cp config.yaml config.yaml.bk 
     sed -i "s|${coinsebase_patern}|${coinbase}|g" config.yaml.bk
-    sed -i "s|${sc_patern}|${sc}|g" config.yaml.bk
+    sed -i "s|${exchange_sc_patern}|${exchange_sc}|g" config.yaml.bk
+    sed -i "s|${lending_sc_patern}|${lending_sc}|g" config.yaml.bk
+
     mv config.yaml.bk $INSTALL_PATH"/config/config.yaml"
     cp errors.yaml $INSTALL_PATH"/config/errors.yaml"
 }
@@ -345,7 +359,7 @@ user_config_sdk(){
     #echo "Relayer Contract address:"
     #read readdress
     #if test -z "$readdress" ;then
-    #    RELAYER_SC_ADDRESS=$readdress
+    #    EXCHANGE_SC_ADDRESS=$readdress
     #fi
     
 }
