@@ -150,7 +150,7 @@ check_open_port(){
 # check service is running, if not start it
 # require debian os
 check_running_service(){
-    if (( $(ps -ef | grep -v grep | grep $1 | wc -l) > 0 ))
+    if (( $(pgrep $1 | wc -l) > 0 ))
     then
         return 1
     else
@@ -344,7 +344,6 @@ start_fullnode(){
                 rm -rf $INSTALL_PATH"/tomox/data/tomo/chaindata"
                 mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
             fi 
-
             pm2_start_fullnode new
         else
             echo "Preparing updated tomo fullnode"
