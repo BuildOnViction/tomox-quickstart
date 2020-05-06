@@ -76,6 +76,7 @@ NODE_NAME=$USER
 
 UBUNTU=0
 CENTOS=0
+OS_NAME=""
 
 
 ################################## raw function begin, depend on os ########################################
@@ -178,11 +179,30 @@ install_nodejs(){
     fi
 }
 
-install_docker(){
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo chmod +x get-docker.sh
-    sudo sh get-docker.sh
-    restart_service docker
+install_rabbitmq(){
+    if [ $UBUNTU -eq 1 ]; then
+        install_package rabbitmq-server
+    elif [ $CENTOS -eq 1 ]; then
+        install_package rabbitmq-server
+    fi  
+    
+}
+install_mongodb(){
+    if [ $UBUNTU -eq 1 ]; then
+        sudo apt-get install gnupg
+        wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+        echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/"$OS_NAME" " $(lsb_release -sc)"/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+        sudo apt-get update
+        sudo apt-get install -y mongodb-org
+        echo -e "replication:\n  replSetName: rs0">>/etc/mongod.conf
+        start_service mongod
+        sleep 5
+        mongo --eval "rs.initiate()"
+
+    elif [ $CENTOS -eq 1 ]; then
+        install_package nginx
+    fi  
+    
 }
 
 # param 1 exchange_address
@@ -204,41 +224,34 @@ sdk_write_config(){
     cp errors.yaml $INSTALL_PATH"/config/errors.yaml"
 }
 
-check_running_docker_service(){
-    if [[ $(docker ps -aqf "name=$1") ]]; then
-        return 1
-    else
-        return 0
-    fi
-}
-
-reset_mongodb(){
-    sudo docker kill mongodb
-    sudo docker rm mongodb
-    sudo docker run --restart always -d -p $1:27017 --name mongodb \
-    --hostname mongodb mongo:4.2 --replSet rs0
-
-    sleep 5
-    sudo docker exec -it mongodb mongo --eval "rs.initiate()"
-}
-
-reset_rabbitmq(){
-    sudo docker kill rabbitmq
-    sudo docker rm rabbitmq
-    sudo docker run --restart always -d -p $1:5672 --name rabbitmq rabbitmq:3.8
-}
-
 setup_rabbitmq(){
-    check_running_docker_service rabbitmq
-    if [ $? -eq 0 ]; then
-        reset_rabbitmq $RABBITMQ_PORT
+    check_running_service rabbitmq
+    if [ "$?" -eq 0 ]; then
+        echo "rabbitmq is not running"
+        check_installed_service rabbitmq
+        if [ "$?" -eq 1 ]; then
+            echo "rabbitmq is installed but not running, starts it"
+            start_service rabbitmq
+        else
+            echo "rabbitmq is not installed, installs it"
+            install_docker
+        fi
+
     fi
-    
 }
 setup_mongodb(){
-    check_running_docker_service mongodb
-    if [ $? -eq 0 ]; then
-        reset_mongodb $MONGODB_PORT
+    check_running_service mongod
+    if [ "$?" -eq 0 ]; then
+        echo "mongodb is not running"
+        check_installed_service mongod
+        if [ "$?" -eq 1 ]; then
+            echo "mongodb is installed but not running, starts it"
+            start_service mongod
+        else
+            echo "mongodb is not installed, installs it"
+            install_mongodb
+        fi
+
     fi
 }
 
@@ -448,22 +461,6 @@ setup_install_path(){
     fi
 
 }
-setup_docker(){
-    check_running_service docker
-    if [ "$?" -eq 0 ]; then
-        echo "docker is not running"
-        check_installed_service docker
-        if [ "$?" -eq 1 ]; then
-            echo "docker is installed but not running, starts it"
-            start_service docker
-        else
-            echo "docker is not installed, installs it"
-            install_docker
-        fi
-
-    fi
-}
-
 
 setup_nginx(){
     check_running_service nginx
@@ -589,7 +586,6 @@ install_dependency(){
 setup_environment(){
     install_dependency
     install_nodejs
-    setup_docker
     setup_install_path
 }
 
@@ -616,10 +612,7 @@ uninstall(){
     echo "Stopping services..."
     pm2_stop_fullnode
     pm2_stop_sdk
-    docker kill mongodb
-    docker kill rabbitmq
-    docker rm mongodb
-    docker rm rabbitmq
+    
     sleep 3
     echo "Removing files..."
     rm -rf $INSTALL_PATH
@@ -699,14 +692,17 @@ echo "##########################################################################
 os=$(awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }')
 if [[ "$os" == *"ubuntu"* ]]; then
     UBUNTU=1
+    OS_NAME="ubuntu"
     echo "Preparing install on ubuntu os"
 fi
 if [[ "$os" == *"debian"* ]]; then
     UBUNTU=1
+    OS_NAME="debian"
     echo "Preparing install on debian os"
 fi
 if [[ "$os" == *"centos"* ]]; then
     CENTOS=1
+    OS_NAME="centos"
      echo "Preparing install on centos os"
 fi
 
