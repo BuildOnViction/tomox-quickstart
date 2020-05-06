@@ -234,7 +234,7 @@ setup_rabbitmq(){
             start_service rabbitmq
         else
             echo "rabbitmq is not installed, installs it"
-            install_docker
+            install_rabbitmq
         fi
 
     fi
