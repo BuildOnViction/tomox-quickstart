@@ -1,4 +1,9 @@
 #!/bin/bash
 
-cd /tmp && git clone https://github.com/tomochain/tomox-quickstart.git
-cd tomox-quickstart && git checkout v1.1.0-beta && bash setup.sh
+APP_VERSION=1.1.0-beta
+
+cd /tmp && \
+    wget -O "tomox-quickstart-${APP_VERSION}.tar.gz" https://github.com/tomochain/tomox-quickstart/archive/v${APP_VERSION}.tar.gz && \
+    tar xzf "tomox-quickstart-${APP_VERSION}.tar.gz" && \
+    rm -rf "tomox-quickstart-${APP_VERSION}.tar.gz" && \
+    cd "tomox-quickstart-${APP_VERSION}" && bash setup.sh
