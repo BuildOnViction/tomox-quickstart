@@ -183,7 +183,12 @@ install_rabbitmq(){
     if [ $UBUNTU -eq 1 ]; then
         install_package rabbitmq-server
     elif [ $CENTOS -eq 1 ]; then
-        install_package rabbitmq-server
+        sudo yum -y install erlang socat
+        wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.10/rabbitmq-server-3.6.10-1.el7.noarch.rpm
+        sudo rpm --import https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
+        sudo rpm -Uvh rabbitmq-server-3.6.10-1.el7.noarch.rpm
+        sudo systemctl start rabbitmq-server
+        sudo systemctl enable rabbitmq-server
     fi  
     
 }
@@ -207,7 +212,7 @@ install_mongodb(){
         sudo echo "enabled=1" >>/etc/yum.repos.d/mongodb-org-4.2.repo
         sudo echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc" >>/etc/yum.repos.d/mongodb-org-4.2.repo
 
-        sudo yum install mongodb-org
+        sudo yum -y install mongodb-org
         sudo echo -e "replication:\n  replSetName: rs0">>/etc/mongod.conf
         start_service mongod
         sleep 5
