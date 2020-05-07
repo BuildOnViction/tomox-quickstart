@@ -194,13 +194,24 @@ install_mongodb(){
         echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/"$OS_NAME" " $(lsb_release -sc)"/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
         sudo apt-get update
         sudo apt-get install -y mongodb-org
-        echo -e "replication:\n  replSetName: rs0">>/etc/mongod.conf
+        sudo echo -e "replication:\n  replSetName: rs0">>/etc/mongod.conf
         start_service mongod
         sleep 5
         mongo --eval "rs.initiate()"
 
     elif [ $CENTOS -eq 1 ]; then
-        install_package nginx
+        sudo echo "[mongodb-org-4.2]" >>/etc/yum.repos.d/mongodb-org-4.2.repo
+        sudo echo "name=MongoDB Repository" >>/etc/yum.repos.d/mongodb-org-4.2.repo
+        sudo echo "baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/4.2/x86_64/" >>/etc/yum.repos.d/mongodb-org-4.2.repo
+        sudo echo "gpgcheck=1" >>/etc/yum.repos.d/mongodb-org-4.2.repo
+        sudo echo "enabled=1" >>/etc/yum.repos.d/mongodb-org-4.2.repo
+        sudo echo "gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc" >>/etc/yum.repos.d/mongodb-org-4.2.repo
+
+        sudo yum install mongodb-org
+        sudo echo -e "replication:\n  replSetName: rs0">>/etc/mongod.conf
+        start_service mongod
+        sleep 5
+        mongo --eval "rs.initiate()"
     fi  
     
 }
