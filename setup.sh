@@ -183,10 +183,14 @@ install_rabbitmq(){
     if [ $UBUNTU -eq 1 ]; then
         install_package rabbitmq-server
     elif [ $CENTOS -eq 1 ]; then
-        sudo yum -y install erlang socat
-        wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.10/rabbitmq-server-3.6.10-1.el7.noarch.rpm
-        sudo rpm --import https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
-        sudo rpm -Uvh rabbitmq-server-3.6.10-1.el7.noarch.rpm
+        wget http://packages.erlang-solutions.com/erlang-solutions-1.0-1.noarch.rpm
+        sudo rpm -Uvh erlang-solutions-1.0-1.noarch.rpm
+        sudo yum install erlang
+
+        wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.1/rabbitmq-server-3.6.1-1.noarch.rpm
+        sudo rpm --import https://www.rabbitmq.com/rabbitmq-signing-key-public.asc
+        sudo yum install rabbitmq-server-3.6.1-1.noarch.rpm
+
         sudo systemctl start rabbitmq-server
         sudo systemctl enable rabbitmq-server
     fi  
