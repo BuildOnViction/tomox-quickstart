@@ -328,7 +328,9 @@ start_fullnode(){
             curl -L $TOMOX_GENESIS -o $INSTALL_PATH"/tomox/genesis.json"
             echo "">$INSTALL_PATH"/tomox/passparser.txt"
             if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
-                rm -rf $INSTALL_PATH"/tomox/data/tomo/chaindata"
+                mkdir $INSTALL_PATH"/tomox/data"
+                mkdir $INSTALL_PATH"/tomox/data/tomo"
+                echo "Moving downloaded chaindata:"$INSTALL_PATH"/tomox/chaindata to: "$INSTALL_PATH"/tomox/data/tomo/chaindata"
                 mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
             fi 
 
@@ -378,6 +380,7 @@ user_config_fullnode(){
             if [[ $nodename =~ ['!@#$%^&*()+'] ]]; then
                 echo "Node name must not contains special characters, try again!"
             else
+                NODE_NAME=$nodename
                 break ;
             fi 
 
