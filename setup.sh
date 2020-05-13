@@ -51,7 +51,7 @@ if [ $IS_MAINNET -eq 1 ]; then
     TOMOX_SDK_UI_VERSION=v1.2.1
 
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
-    TOMOX_CHAIN_DATA_URL="http://chaindata.tomotools.com:30304/20200426_block_19872275.tar.gz"
+    TOMOX_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/latest.tar.gz"
 
     SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
     FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
@@ -370,17 +370,19 @@ user_config_sdk(){
 
 user_config_fullnode(){
 
-    echo "Enter fullnode name:"
-    read nodename
-    if ! test -z "$nodename" ;then
-        NODE_NAME=$nodename
-    fi
+    while true; do
+        read -p "Enter fullnode name:" nodename
+        if test -z "$nodename" ;then
+            echo "Node name must not be empty, try again!"
+        else
+            if [[ $nodename =~ ['!@#$%^&*()+'] ]]; then
+                echo "Node name must not contains special characters, try again!"
+            else
+                break ;
+            fi 
 
-    # echo "Enter fullnode chain data(if you dont have, press enter key):"
-    # read datachain
-    # if ! test -z "$datachain" ;then
-    #     FULLNODE_CHAIN_DATA=$datachain
-    # fi
+        fi
+    done
     
 }
 pm2_start_sdk(){
