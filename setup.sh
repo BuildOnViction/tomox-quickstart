@@ -47,8 +47,8 @@ if [ $IS_MAINNET -eq 1 ]; then
     LENDING_SC_ADDRESS="0x7d761afd7ff65a79e4173897594a194e3c506e57"
 
     TOMOCHAIN_VERSION=v2.2.1
-    TOMOX_SDK_VERSION=v1.2.0
-    TOMOX_SDK_UI_VERSION=v1.2.1
+    TOMOX_SDK_VERSION=v1.2.1
+    TOMOX_SDK_UI_VERSION=v1.2.2
 
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
     TOMOX_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/latest.tar.gz"
