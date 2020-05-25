@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_VERSION=1.2.2
+APP_VERSION=1.2.3
 
 cd /tmp && \
     wget -O "tomox-quickstart-${APP_VERSION}.tar.gz" https://github.com/tomochain/tomox-quickstart/archive/v${APP_VERSION}.tar.gz && \
