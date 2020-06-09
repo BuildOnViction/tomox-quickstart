@@ -300,9 +300,9 @@ pm2_start_fullnode(){
 
 download_chain_data(){
     echo "Download chain data, it takes time!"
-    wget -O $INSTALL_PATH"/tomox/chaindata-testnet.tar" $TOMOX_CHAIN_DATA_URL
+    wget -O $INSTALL_PATH"/tomox/chaindata.tar" $TOMOX_CHAIN_DATA_URL
     echo "Extracting chain data ......"
-    tar xf $INSTALL_PATH"/tomox/chaindata-testnet.tar" -C $INSTALL_PATH"/tomox/"
+    tar xf $INSTALL_PATH"/tomox/chaindata.tar" -C $INSTALL_PATH"/tomox/"
 
 }
 download_tomo_binary(){
