@@ -317,7 +317,7 @@ download_chain_data(){
         tar xf $INSTALL_PATH"/tomox/tomox_chaindata.tar" -C $INSTALL_PATH"/tomox/"
 
         echo "Moving downloaded tomox chain data:"$INSTALL_PATH"/tomox/tomox_chaindata to: "$INSTALL_PATH"/tomox/data/tomox"
-        mv  $INSTALL_PATH"/tomox/tomox_chaindata" $INSTALL_PATH"/tomox/data/tomox"
+        mv  $INSTALL_PATH"/tomox/tomox" $INSTALL_PATH"/tomox/data/tomox"
     fi
 }
 
