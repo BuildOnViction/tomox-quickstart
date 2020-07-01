@@ -176,6 +176,7 @@ install_nodejs(){
         sudo yum install nodejs
         sudo npm install -g pm2
     fi
+    pm2 install pm2-logrotate
 }
 
 install_docker(){
