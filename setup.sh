@@ -311,7 +311,7 @@ download_chain_data(){
     echo "Moving downloaded tomochain data:"$INSTALL_PATH"/tomox/chaindata to: "$INSTALL_PATH"/tomox/data/tomo/chaindata"
     mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
 
-    if !test -z "$TOMOX_CHAIN_DATA_URL" ;then
+    if ! test -z "$TOMOX_CHAIN_DATA_URL" ;then
         wget -O $INSTALL_PATH"/tomox/tomox_chaindata.tar" $TOMOX_CHAIN_DATA_URL
         echo "Extracting tomox chain data ......"
         tar xf $INSTALL_PATH"/tomox/tomox_chaindata.tar" -C $INSTALL_PATH"/tomox/"
