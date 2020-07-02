@@ -52,7 +52,7 @@ if [ $IS_MAINNET -eq 1 ]; then
     TOMOX_SDK_UI_VERSION=v1.2.3
 
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
-    TOMOCHAIN_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/latest.tar.gz"
+    TOMOCHAIN_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/chaindata.tar.gz"
     TOMOX_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/tomox.tar.gz"
     SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
     FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
@@ -316,7 +316,7 @@ download_chain_data(){
         echo "Extracting tomox chain data ......"
         tar xf $INSTALL_PATH"/tomox/tomox_chaindata.tar" -C $INSTALL_PATH"/tomox/"
 
-        echo "Moving downloaded tomox chain data:"$INSTALL_PATH"/tomox/tomox_chaindata to: "$INSTALL_PATH"/tomox/data/tomox"
+        echo "Moving downloaded tomox chain data:"$INSTALL_PATH"/tomox/tomox to: "$INSTALL_PATH"/tomox/data/tomox"
         mv  $INSTALL_PATH"/tomox/tomox" $INSTALL_PATH"/tomox/data/tomox"
     fi
 }
