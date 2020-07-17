@@ -35,7 +35,8 @@ FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/$
 FULLNODE_CHAIN_DATA=$INSTALL_PATH"/tomox/data"
 TOMOCHAIN_FULLNODE="https://testnet.tomochain.com"
 TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/testnet/genesis/testnet.json"
-TOMOX_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
+TOMOCHAIN_CHAIN_DATA_URL="https://chaindata-testnet.s3-ap-southeast-1.amazonaws.com/chaindata-testnet.tar"
+TOMOX_CHAIN_DATA_URL=""
 BOOTNODES="enode://ba966140e161ad416a7bd7c75dc695e0a41232723e2b19cbbf651883ef5e8f2528801b17b9d63152814d219a58a4fcc3e3c877486e64057523f6714092348efa@195.154.150.210:30301"
 NETWORD_ID=89
 DOWNLOAD_CHAIN_DATA_ENABLED=0
@@ -51,8 +52,8 @@ if [ $IS_MAINNET -eq 1 ]; then
     TOMOX_SDK_UI_VERSION=v1.3.0
 
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
-    TOMOX_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/latest.tar.gz"
-
+    TOMOCHAIN_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/chaindata.tar.gz"
+    TOMOX_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/tomox.tar.gz"
     SDK_BACKEND_RELEASE_URL="https://github.com/tomochain/tomox-sdk/releases/download/${TOMOX_SDK_VERSION}/tomox-sdk.${TOMOX_SDK_VERSION}.linux.amd64"
     FULLNODE_RELEASE_URL="https://github.com/tomochain/tomochain/releases/download/${TOMOCHAIN_VERSION}/tomo-linux-amd64"
     SDK_UI_RELEASE_URL="https://github.com/tomochain/tomox-sdk-ui/releases/download/${TOMOX_SDK_UI_VERSION}/tomox-sdk-ui.${TOMOX_SDK_UI_VERSION}.tar.gz"
@@ -301,11 +302,25 @@ pm2_start_fullnode(){
 
 download_chain_data(){
     echo "Download chain data, it takes time!"
-    wget -O $INSTALL_PATH"/tomox/chaindata.tar" $TOMOX_CHAIN_DATA_URL
-    echo "Extracting chain data ......"
+    wget -O $INSTALL_PATH"/tomox/chaindata.tar" $TOMOCHAIN_CHAIN_DATA_URL
+    echo "Extracting tomo chain data ......"
     tar xf $INSTALL_PATH"/tomox/chaindata.tar" -C $INSTALL_PATH"/tomox/"
 
+    mkdir $INSTALL_PATH"/tomox/data"
+    mkdir $INSTALL_PATH"/tomox/data/tomo"
+    echo "Moving downloaded tomochain data:"$INSTALL_PATH"/tomox/chaindata to: "$INSTALL_PATH"/tomox/data/tomo/chaindata"
+    mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
+
+    if ! test -z "$TOMOX_CHAIN_DATA_URL" ;then
+        wget -O $INSTALL_PATH"/tomox/tomox_chaindata.tar" $TOMOX_CHAIN_DATA_URL
+        echo "Extracting tomox chain data ......"
+        tar xf $INSTALL_PATH"/tomox/tomox_chaindata.tar" -C $INSTALL_PATH"/tomox/"
+
+        echo "Moving downloaded tomox chain data:"$INSTALL_PATH"/tomox/tomox to: "$INSTALL_PATH"/tomox/data/tomox"
+        mv  $INSTALL_PATH"/tomox/tomox" $INSTALL_PATH"/tomox/data/tomox"
+    fi
 }
+
 download_tomo_binary(){
     echo "Downloading new tomo binary..."
     wget -O $INSTALL_PATH"/tomox/tomo" $FULLNODE_RELEASE_URL
@@ -328,12 +343,6 @@ start_fullnode(){
             echo "download gennesis: "$TOMOX_GENESIS
             curl -L $TOMOX_GENESIS -o $INSTALL_PATH"/tomox/genesis.json"
             echo "">$INSTALL_PATH"/tomox/passparser.txt"
-            if [ "$DOWNLOAD_CHAIN_DATA_ENABLED" -eq 1 ]; then
-                mkdir $INSTALL_PATH"/tomox/data"
-                mkdir $INSTALL_PATH"/tomox/data/tomo"
-                echo "Moving downloaded chaindata:"$INSTALL_PATH"/tomox/chaindata to: "$INSTALL_PATH"/tomox/data/tomo/chaindata"
-                mv  $INSTALL_PATH"/tomox/chaindata" $INSTALL_PATH"/tomox/data/tomo/chaindata"
-            fi 
 
             pm2_start_fullnode new
         else
