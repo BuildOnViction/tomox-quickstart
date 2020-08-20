@@ -49,7 +49,7 @@ if [ $IS_MAINNET -eq 1 ]; then
 
     TOMOCHAIN_VERSION=v2.2.4
     TOMOX_SDK_VERSION=v1.2.3
-    TOMOX_SDK_UI_VERSION=v1.3.0
+    TOMOX_SDK_UI_VERSION=v1.3.1
 
     TOMOX_GENESIS="https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/mainnet.json"
     TOMOCHAIN_CHAIN_DATA_URL="https://tomochain.s3-ap-southeast-1.amazonaws.com/chaindata/chaindata.tar.gz"
